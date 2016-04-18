@@ -70,3 +70,4 @@ streams:
         REMOTE: "${node.node2.host}"
 
 ```
+

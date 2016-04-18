@@ -73,3 +73,10 @@ class Specs(object):
 			# Merge specs
 			self.specs = deepupdate( self.specs, specs )
 
+
+	def accessFactory(self, name):
+		"""
+		Create a new access object
+		"""
+		pass
+
