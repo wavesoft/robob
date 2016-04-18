@@ -1,0 +1,151 @@
+
+#
+# The title of this Benchmark
+#
+name: zeromq-tcp
+title: ZeroMQ Test, using TCP Transport
+
+#
+# Load streamlets
+#
+load:
+  - "streamlets/free.yaml"
+
+#
+# Statistical-related configuration
+#
+stats:
+
+  # How many times to repeat each test-case
+  repeat: 10
+
+#
+# What metrics to keep in the report how to format them
+#
+metrics:
+
+  - name: min
+    units: "Kb/s"
+  - name: max
+    units: "Kb/s"
+  - name: average
+    units: "Kb/s"
+
+  - name: uss_min
+    units: "ms"
+  - name: uss_max
+    units: "ms"
+  - name: uss_avg
+    units: "ms"
+
+  - name: pss_min
+  - name: pss_max
+  - name: pss_avg
+  - name: rss_min
+  - name: rss_max
+  - name: rss_avg
+  - name: rx_bytes
+  - name: tx_bytes
+  - name: cpu_average
+
+#
+# Global variables shared everywhere
+#
+globals:
+  num-msgs: 0
+  queue-size: 16
+
+#
+# Test-cases
+#
+test-cases:
+  size:
+    - 1024
+    - 2048
+    - 4096
+    - 8192
+    - 16384
+    - 32768
+    - 65536
+    - 1048576
+    - 2097152
+    - 4194304
+    - 8388608
+    - 16777216
+    - 33554432
+    - 67108864
+    - 134217728
+
+#
+# Sets of environment variables the applications can use
+#
+environments:
+
+  # Default environment variable
+  default: 
+
+    LIBFABRIC_DIR: /opt/libfabric-1.2.0
+    BASE_DIR: /opt/FairRoot_0MQ
+    FAIRSOFT_DIR: /home/lalazari/fair_install/FairSoftInstall
+    NANOMSG_DIR: /opt/nanomsg-0.8-ofi
+    LD_LIBRARY_PATH: ${LIBFABRIC_DIR}/lib:${BASE_DIR}/lib:${FAIRSOFT_DIR}/lib:${NANOMSG_DIR}/lib
+
+#
+# Involved machines in this benchmark and how
+# to access them from the robot node
+#
+nodes:
+
+  - name: gateway
+    host: lxplus.cern.ch
+    access:
+      - class: robob.access.ssh
+        username: user
+        password: secret
+
+  - name: sender
+    host: node1.cern.ch
+    access:
+      - class: robob.access.ssh
+        gateway: gateway
+        username: user
+        password: secret
+
+  - name: receiver
+    host: node2.cern.ch
+    access:
+      - class: robob.access.ssh
+        gateway: gateway
+        username: user
+        password: secret
+
+#
+# Applications to be started on the machines
+#
+apps:
+
+  - name: bsampler
+    env: default
+    binary: ${WORKDIR}/bin/bsampler
+
+#
+# Parsers that extract metrics from streams
+#
+parser:
+
+  - name: default
+    class: robob.parser.regex
+    match:
+      - "^.*?Got (?P<CQ>[0-9]+) CQ.*$"
+
+#
+# The actual benchmark streams to open in order to start
+# the benchmark.
+#
+streams:
+
+  - node: sender # Connect to sender
+    app: bsampler # Run bsampler
+    parser: default # Use default parser to extract metrics
+    streamlets: [ memory ] # What streamlets to run
+

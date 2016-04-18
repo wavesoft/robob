@@ -1,0 +1,43 @@
+streamlets:
+
+    #
+    # Name and title of this streamlet
+    #
+  - name: free
+    title: Free Memory
+
+    #
+    # What script (shell script) to run
+    #
+    script: |
+      free -m
+      sleep 1
+
+    #
+    # What metrics are exposed
+    #
+    metrics:
+
+      - name: mem_used
+        title: Used memory
+        units: "Mb"
+
+      - name: mem_free
+        title: Free memory
+        units: "Mb"
+
+    #
+    # Which parser(s) to use to extract metrics
+    # 
+    parser:
+
+      - name: default
+        class: robob.parser.grid  
+        match:
+          - name: mem_used
+            anchor: "Mem:"
+            col: 2
+
+          - name: mem_free
+            anchor: "Mem:"
+            col: 3
