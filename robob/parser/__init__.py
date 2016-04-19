@@ -1,20 +1,31 @@
 
+from robob.pipe import PipeListener
 from robob.component import ComponentBase
 
-class ParserBase(ComponentBase):
+class ParserBase(ComponentBase, PipeListener):
 	"""
 	Base class for implementing stream output parser
 	"""
 
-	def configure(self, config):
+	def __init__(self, ctx):
 		"""
-		[Public] Apply the specified configuration
+		Initialize parser base class
 		"""
-		self.config = config
+		ComponentBase.__init__(self, ctx)
+		PipeListener.__init__(self)
 
-	def parse(self, line):
+		# Initialize metrics
+		self.metrics = {}
+
+	def got_stdout(self, line):
 		"""
-		[Public] Parse the specified line
+		Process an stdout line
+		"""
+		pass
+
+	def got_stderr(self, line):
+		"""
+		Process an stderr line
 		"""
 		pass
 
@@ -22,7 +33,7 @@ class ParserBase(ComponentBase):
 		"""
 		[Public] Reset the parser for a new stream
 		"""
-		pass
+		self.metrics = {}
 
 	def update(self, metric, value):
 		"""
