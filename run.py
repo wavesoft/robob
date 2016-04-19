@@ -19,3 +19,5 @@ specs = Specs( sys.argv[1] )
 specs.load()
 
 print specs.specs
+print specs.context
+

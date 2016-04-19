@@ -1,9 +1,8 @@
 
-from robob.access import AccessBase
+from robob.pipe import PipeBase
 
-class Access(AccessBase):
+class Pipe(PipeBase):
 	"""
-	Local access implementation
+	Local access is just a pass-through pipe
 	"""
 	pass
-

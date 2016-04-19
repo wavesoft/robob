@@ -10,28 +10,59 @@ def _class_by_name( module, className ):
 	# Get class
 	return getattr(mod, className)
 
-def accessFactory( specs, name ):
+def parserFactory( specs, context ):
 	"""
-	Instantiate or get an access object from the 
-	specifications with the given name.
-	"""
-	pass
-
-def aggregateFactory( config, metric ):
-	"""
-	Create an aggregator factory from the config dict
+	Create a parser from the specs dict
 	"""
 
 	# Extract class
-	cls_name = config['class']
-	del config['class']
+	cls_name = specs['class']
+	del specs['class']
+
+	# Get class
+	cls = _class_by_name( cls_name, 'Parser' )
+
+	# Instantiate and configure
+	inst = cls( context )
+	inst.configure( specs )
+
+	# Return instance
+	return inst
+
+def pipeFactory( specs, context ):
+	"""
+	Create a pipe from the specs dict
+	"""
+
+	# Extract class
+	cls_name = specs['class']
+	del specs['class']
+
+	# Get class
+	cls = _class_by_name( cls_name, 'Pipe' )
+
+	# Instantiate and configure
+	inst = cls( context )
+	inst.configure( specs )
+
+	# Return instance
+	return inst
+
+def aggregateFactory( config, metric ):
+	"""
+	Create an aggregator from the specs dict
+	"""
+
+	# Extract class
+	cls_name = specs['class']
+	del specs['class']
 
 	# Get class
 	cls = _class_by_name( cls_name, 'Aggregate' )
 
 	# Instantiate and configure
 	inst = cls( metric )
-	inst.configure( config )
+	inst.configure( specs )
 
 	# Return instance
 	return inst

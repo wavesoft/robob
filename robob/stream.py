@@ -10,9 +10,3 @@ class Stream(object):
 		"""
 		pass
 
-	def run(self, test):
-		"""
-		Run the specified test
-		"""
-		pass
-

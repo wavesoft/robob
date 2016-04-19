@@ -1,6 +1,7 @@
 
 import os
 import yaml
+from robob.context import Context
 
 def deepupdate(original, update):
 	"""
@@ -73,10 +74,17 @@ class Specs(object):
 			# Merge specs
 			self.specs = deepupdate( self.specs, specs )
 
+		# Open a global context & import global variables
+		self.context = Context()
+		if 'globals' in self.specs:
+			self.context.update( self.specs['globals'] )
 
-	def accessFactory(self, name):
-		"""
-		Create a new access object
-		"""
-		pass
+		# Import environments
+		if 'environments' in self.specs:
+			for k,v in self.specs['environments'].iteritems():
+				self.context.set("env", self.specs['environments'])
 
+		# Import nodes
+		if 'nodes' in self.specs:
+			for v in self.specs['nodes']:
+				self.context.set("node.%s" % v['name'], v)
