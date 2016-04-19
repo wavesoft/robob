@@ -117,7 +117,7 @@ apps:
 
   - name: bsampler
     env: default
-    binary: ${WORKDIR}/bin/bsampler
+    binary: ${BASE_DIR}/bin/bsampler
 
 #
 # Parsers that extract metrics from streams

@@ -47,5 +47,7 @@ streamlets:
     # What script (shell script) to run
     #
     script: |
-      free -m
-      sleep 1
+      while true; do
+        free -m
+        sleep 1
+      done

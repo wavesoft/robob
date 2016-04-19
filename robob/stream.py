@@ -9,14 +9,16 @@ class Stream(object):
 	A stram on which tests can run
 	"""
 
-	def __init__(self, context):
+	def __init__(self, context, metrics):
 		"""
 		Initialize a new stream
 		"""
 
 		self.pipe = None
+		self.bashPipe = None
 		self.appPipe = None
-		self.metrics = None
+		self.accessPipe = None
+		self.metrics = metrics
 		self.context = context
 
 	def configure(self, specs):
@@ -72,11 +74,11 @@ class Stream(object):
 
 		# Factory app pipe
 		self.appPipe = AppPipe( self.context )
-		self.appPipe.configure( app )
+		self.appPipe.configure( self.context['app'] )
 
 		# Factory bash multiplexer/wrapper
-		self.pipe = BashWrapPipe( self.context )
-		self.pipe.plug( self.appPipe )
+		self.bashPipe = BashWrapPipe( self.context )
+		self.bashPipe.plug( self.appPipe )
 
 		########################################
 		# Initialize metrics
@@ -122,7 +124,7 @@ class Stream(object):
 				pipe = pipeFactory( streamlet, self.context )
 
 				# Plug it on bash pipe
-				self.pipe.plug( pipe )
+				self.bashPipe.plug( pipe )
 
 				# Get parser(s)
 				parser_names = []
@@ -140,5 +142,34 @@ class Stream(object):
 					parser = parserFactory(self.context["parser.%s" % n], self.context, self.metrics )
 					pipe.listen( parser )
 
+		########################################
+		# Initialize host accessor
+		########################################
+
+		# Get node configuration
+		node = self.context['node']
+		if not 'access' in node:
+			raise AssertionError("Required at least one access component on node specs")
+
+		# Create and chain accessor component
+		for a in node['access']:
+
+			# Merge node components into the accessor configuration
+			specs = dict(node)
+			specs.update( a )
+
+			# Create accessor pipe
+			pipe = pipeFactory( specs, self.context )
+
+			# Chain them all the way to the bash pipe
+			if self.accessPipe is None:
+				self.accessPipe = pipe
+				self.accessPipe.plug( self.bashPipe )
+			else:
+				pipe.plug( self.accessPipe )
+				self.accessPipe = pipe
+
+		# That's now our master pipe and we are ready to go!
+		self.pipe = self.accessPipe
 
 

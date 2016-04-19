@@ -58,7 +58,7 @@ class Specs(object):
 
 		return contexts
 
-	def createStreams(self, testContext):
+	def createStreams(self, testContext, testMetrics):
 		"""
 		Create a stream contexts using the specified test context as base
 		"""

@@ -2,6 +2,7 @@
 
 import sys
 from robob.specs import Specs
+from robbo.driver import TestDriver
 
 def help():
 	"""
@@ -24,8 +25,11 @@ tests = specs.createTestContexts()
 # Create stream context for every test
 for test in tests:
 
-	# Get stream objects for each test context
+	# Get stream objects for this test context
 	streams = specs.createStreams( test )
+
+	# Create a test driver
+	driver = TestDriver( streams, test )
 
 	print streams[0].pipe.pipe_stdin()
 	# print streams[0].context
