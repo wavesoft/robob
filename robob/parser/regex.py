@@ -1,8 +1,8 @@
 
 import re
-from robob.parser import Parser as BaseParser
+from robob.parser import ParserBase
 
-class Parser(BaseParser):
+class Parser(ParserBase):
 	"""
 	The regular expression parser matches each line against
 	a set of regex rules and extracts the matches into metrics.

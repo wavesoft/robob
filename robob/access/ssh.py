@@ -1,48 +1,37 @@
 
-from robob.access import Access
+from robob.pipe import PipeBase
 
-class Access(Access):
+class Pipe(PipeBase):
 	"""
-	SSH Tunelling application
+	SSH Tunelling pipe
 	"""
 
-	def configure(self, specs, config):
+	def configure(self, config):
 		"""
 		Configure access object
 		"""
 
-		this.user = ""
-		this.host = ""
+		# Prepare command line
+		self.username = config['username']
+		self.args = []
 
-		# Factory a gateway
-		this.gateway = None
-		if 'gateway' in config:
-			this.gateway = specs.accessFactory( config['gateway'] )
+		# Prepare private key or password
+		if 'key' in config:
+			self.args += [ '-i', config['key'] ]
 
-	def execute(self, cmdline):
+	def pipe_cmdline(self):
 		"""
-		Chain cmdline to ssh
-		"""
-
-		# Prepare cmdline
-		cmdline = "ssh %s@%s -- %s" % (self.user, self.host, cmdline)
-
-		# Nest cmdline
-		if this.gateway:
-			cmdline = this.gateway.execute( cmdline )
-
-		# Return new cmdline
-		return cmdline
-
-	def chain(self, stdin, stdout, stderr):
-		"""
-		Chainable pipes
+		Pipe local arguments to command-line
 		"""
 
-		# Nest gateway if needed
-		if this.gateway:
-			return this.gateway.chain( stdin, stdout, stderr )
+		# Prepare args
+		args = [ "/usr/bin/ssh" ]
+		args += [ "%s@%s" % (self.username, self.context["node.host"]) ]
+		args += [ "--" ]
+		args += self.args
 
-		# Pass-through
-		return (stdin, stdout, stderr)
+		# Append child command-lines
+		args += super(Pipe, self).pipe_cmdline()
 
+		# Return new arguments
+		return args

@@ -1,15 +1,7 @@
 
-from robob.pipeline import ExecPipelineItem
+from robob.component import ComponentBase
 
-class Access(ExecPipelineItem):
+class AccessBase(ComponentBase):
 	"""
 	Base class for implementing access providers
 	"""
-
-	def configure(self, config):
-		"""
-		Configure access object
-		"""
-		pass
-
-

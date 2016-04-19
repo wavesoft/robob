@@ -1,8 +1,8 @@
 
 import re
-from robob.parser import Parser as BaseParser
+from robob.parser import ParserBase
 
-class Parser(BaseParser):
+class Parser(ParserBase):
 	"""
 	The grid parser gives you the ability to extract a particular
 	column from a specific line in the  

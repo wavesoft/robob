@@ -7,18 +7,24 @@ class ExecPipelineItem(object):
 	A chainable pipeline item
 	"""
 
-	def execute(self, cmdline):
+	def pipe_execute(self, cmdline):
 		"""
 		Chainable command-line
 		"""
 		return cmdline
 
-	def chain(self, stdin, stdout, stderr):
+	def pipe_stdin(self, stdin):
+		"""
+		Pipe stdin
+		"""
+		return stdin
+
+	def pipe_stdout(self, stdout, stderr):
 		"""
 		Chainable pipes
 		"""
 		# Pass-through
-		return (stdin, stdout, stderr)
+		return (stdout, stderr)
 
 class ExecPipeline(object):
 	"""
@@ -32,7 +38,7 @@ class ExecPipeline(object):
 		"""
 		self.sequence = []
 
-	def run(self, cmdline):
+	def run(self, cmdline, stdin):
 		"""
 		Run the pipeline and return a popen object
 		"""
@@ -40,16 +46,23 @@ class ExecPipeline(object):
 		# Calculate command-line
 		cmd = cmdline
 		for s in self.sequence:
-			cmd = s.execute( s, cmd )
+			cmd = s.pipe_execute( s, cmd )
 
 		# Open a process there
 		self.proc = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE )
 
+		# Generate stdin buffer
+		sin = stdin
+		for s in self.sequence:
+			sin = s.pipe_stdin( sin )
+
+		# Pipe everything to stdin
+		self.proc.stdin.write(sin)
+
 		# Chain pipes
-		stdin = self.proc.stdin
 		stdout = self.proc.stdout
 		stderr = self.proc.stderr
 		for s in self.sequence:
-			(stdin, stdout, stderr) = s.chain( stdin, stdout, stderr )
+			(stdout, stderr) = s.pipe_stdout( stdout, stderr )
 
 

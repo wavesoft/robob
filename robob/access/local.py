@@ -1,7 +1,7 @@
 
-from robob.access import Access
+from robob.access import AccessBase
 
-class Access(Access):
+class Access(AccessBase):
 	"""
 	Local access implementation
 	"""

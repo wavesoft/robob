@@ -1,5 +1,7 @@
 
-class Parser(object):
+from robob.component import ComponentBase
+
+class ParserBase(ComponentBase):
 	"""
 	Base class for implementing stream output parser
 	"""
