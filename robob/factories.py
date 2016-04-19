@@ -10,7 +10,7 @@ def _class_by_name( module, className ):
 	# Get class
 	return getattr(mod, className)
 
-def parserFactory( specs, context ):
+def parserFactory( specs, context, metrics ):
 	"""
 	Create a parser from the specs dict
 	"""
@@ -23,7 +23,7 @@ def parserFactory( specs, context ):
 	cls = _class_by_name( cls_name, 'Parser' )
 
 	# Instantiate and configure
-	inst = cls( context )
+	inst = cls( context, metrics )
 	inst.configure( specs )
 
 	# Return instance
@@ -48,7 +48,7 @@ def pipeFactory( specs, context ):
 	# Return instance
 	return inst
 
-def aggregateFactory( config, metric ):
+def aggregateFactory( specs, metric ):
 	"""
 	Create an aggregator from the specs dict
 	"""

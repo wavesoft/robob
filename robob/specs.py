@@ -1,7 +1,10 @@
 
 import os
 import yaml
+import itertools
+
 from robob.context import Context
+from robob.stream import Stream
 
 def deepupdate(original, update):
 	"""
@@ -14,7 +17,7 @@ def deepupdate(original, update):
 		elif isinstance(value, dict):
 			deepupdate(value, update[key]) 
 		elif isinstance(value, list):
-			update[key] = value + original[value]
+			update[key] = value + update[key]
 	return update
 
 
@@ -29,6 +32,50 @@ class Specs(object):
 		"""
 		self.filename = filename
 		self.specs = {}
+
+	def createTestContexts(self):
+		"""
+		Create test contexts according to specs
+		"""
+
+		# Prepare product components
+		values = []
+		keys = []
+		for k,v in self.specs['test-cases'].iteritems():
+			keys.append(k)
+			values.append(v)
+
+		# Generate test cases as product of combinations
+		contexts = []
+		for v in itertools.product(*values):
+
+			# Fork context
+			ctx = self.context.fork()
+
+			# Update and collect
+			ctx.update( dict(zip( keys, v)) )
+			contexts.append( ctx )
+
+		return contexts
+
+	def createStreams(self, testContext):
+		"""
+		Create a stream contexts using the specified test context as base
+		"""
+		ans = []
+
+		# Create a stream object for every stream defined in specs
+		for ctx in self.specs['streams']:
+
+			# Create and configure a stream
+			stream = Stream( testContext )
+			stream.configure( ctx )
+
+			# Append to list
+			ans.append( stream )
+
+		# Return streams
+		return ans
 
 	def load(self):
 		"""
@@ -84,7 +131,23 @@ class Specs(object):
 			for k,v in self.specs['environments'].iteritems():
 				self.context.set("env", self.specs['environments'])
 
+		# Import metrics
+		if 'metrics' in self.specs:
+			self.context.set("metric", self.specs['metrics'])
+
 		# Import nodes
 		if 'nodes' in self.specs:
-			for v in self.specs['nodes']:
-				self.context.set("node.%s" % v['name'], v)
+			self.context.set( 'node', self.specs['nodes'] )
+
+		# Import parsers
+		if 'parsers' in self.specs:
+			self.context.set( 'parser', self.specs['parsers'] )
+
+		# Import apps
+		if 'apps' in self.specs:
+			self.context.set( 'app', self.specs['apps'] )
+
+		# Import streamlets
+		if 'streamlets' in self.specs:
+			self.context.set( 'streamlet', self.specs['streamlets'] )
+

@@ -25,6 +25,14 @@ class Pipe(PipeBase):
 			else:
 				raise AssertionError("Application's arguments must be a string or list!")
 
+		# Parse application environment
+		self.env = {}
+		if 'env' in config:
+			n = "env.%s" % config['env']
+			if not n in self.context:
+				raise AssertionError("Unknown environment '%s' in application specs" % config['env'])
+			self.env = self.context[ n ]
+
 	def pipe_cmdline(self):
 		"""
 		Pipe local arguments to command-line
@@ -36,6 +44,15 @@ class Pipe(PipeBase):
 
 		# Append child command-lines
 		args += super(Pipe, self).pipe_cmdline()
+
+		# If we have environment wrap in 'env'
+		if self.env:
+			env_prefix = [ 'env' ]
+			for k,v in self.env.iteritems():
+				env_prefix.append( "%s=%s" % (k,v) )
+
+			# Update with prefix
+			args = env_prefix + args
 
 		# Return new arguments
 		return args

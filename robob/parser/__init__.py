@@ -7,7 +7,7 @@ class ParserBase(ComponentBase, PipeListener):
 	Base class for implementing stream output parser
 	"""
 
-	def __init__(self, ctx):
+	def __init__(self, ctx, metrics):
 		"""
 		Initialize parser base class
 		"""
@@ -15,7 +15,7 @@ class ParserBase(ComponentBase, PipeListener):
 		PipeListener.__init__(self)
 
 		# Initialize metrics
-		self.metrics = {}
+		self.metrics = metrics
 
 	def got_stdout(self, line):
 		"""

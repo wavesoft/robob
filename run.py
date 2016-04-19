@@ -18,6 +18,19 @@ if len(sys.argv) < 2:
 specs = Specs( sys.argv[1] )
 specs.load()
 
-print specs.specs
-print specs.context
+# Create test contexts
+tests = specs.createTestContexts()
+
+# Create stream context for every test
+for test in tests:
+
+	# Get stream objects for each test context
+	streams = specs.createStreams( test )
+
+	print streams[0].pipe.pipe_stdin()
+	# print streams[0].context
+	# print streams[0].metrics.titles()
+
+# print specs.specs
+# print specs.context
 

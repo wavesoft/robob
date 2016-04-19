@@ -96,18 +96,10 @@ environments:
 #
 nodes:
 
-  - name: gateway
-    host: lxplus.cern.ch
-    access:
-      - class: robob.access.ssh
-        username: user
-        password: secret
-
   - name: sender
     host: node1.cern.ch
     access:
       - class: robob.access.ssh
-        gateway: gateway
         username: user
         password: secret
 
@@ -115,7 +107,6 @@ nodes:
     host: node2.cern.ch
     access:
       - class: robob.access.ssh
-        gateway: gateway
         username: user
         password: secret
 
@@ -131,7 +122,7 @@ apps:
 #
 # Parsers that extract metrics from streams
 #
-parser:
+parsers:
 
   - name: default
     class: robob.parser.regex
@@ -139,7 +130,7 @@ parser:
       - "^.*?Got (?P<CQ>[0-9]+) CQ.*$"
 
 #
-# The actual benchmark streams to open in order to start
+# The actual streams to open in order to start
 # the benchmark.
 #
 streams:
@@ -147,5 +138,8 @@ streams:
   - node: sender # Connect to sender
     app: bsampler # Run bsampler
     parser: default # Use default parser to extract metrics
-    streamlets: [ memory ] # What streamlets to run
+    streamlets: [ free ] # What streamlets to run
+    finish:
+      timeout: 5 # Finish after 5 seconds timeout
+      metch: 
 

@@ -286,7 +286,7 @@ class Metrics(object):
 		"""
 
 		# Initialize metrics from their config
-		for m in config['metrics']:
+		for m in config['metric']:
 			self.metrics[ m['name'] ] = Metric( m )
 
 	def reset(self):
