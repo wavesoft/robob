@@ -4,16 +4,71 @@ from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.metrics import Metrics
 from robob.pipe.app import Pipe as AppPipe
 
+def streamContext( context, specs ):
+	"""
+	Update given context for use by the stream with the given specs
+	"""
+
+	# Fork context
+	context = context.fork()
+
+	# Get node
+	node = specs['node']
+	if not "node.%s" % node in context:
+		raise AssertionError("Node '%s' was not defined in the specs" % node)
+	node = context["node.%s" % node]
+
+	# Get app
+	app = specs['app']
+	if not "app.%s" % app in context:
+		raise AssertionError("App '%s' was not defined in the specs" % app)
+	app = context["app.%s" % app]
+
+	# Get optional app env
+	env = None
+	if 'env' in app:
+		env = app['env']
+		if not "env.%s" % env in context:
+			raise AssertionError("env '%s' was not defined in the specs" % env)
+		env = context["env.%s" % env]
+
+	########################################
+	# Initialize context variables
+	########################################
+
+	# Define context of current node, parser, app
+	context.set( "node", node )
+	context.set( "app", app )
+	if env:
+		context.set( "env", env )
+		context.update( env )
+
+	# Update custom variable definitions
+	if 'define' in node:
+		context.update( node['define'] )
+	if 'define' in app:
+		context.update( app['define'] )
+	if 'define' in specs:
+		context.update( specs['define'] )
+
+	# Render and return context
+	return context.render()
+
 class Stream(object):
 	"""
 	A stram on which tests can run
 	"""
+
+	# Last stream ID
+	LAST_STREAM_ID = 0
 
 	def __init__(self, context, metrics):
 		"""
 		Initialize a new stream
 		"""
 
+		self.delay = 0
+		self.name = "stream_%i" % Stream.LAST_STREAM_ID
 		self.pipe = None
 		self.bashPipe = None
 		self.appPipe = None
@@ -21,52 +76,21 @@ class Stream(object):
 		self.metrics = metrics
 		self.context = context
 
+		# Update last stream ID
+		Stream.LAST_STREAM_ID += 1
+
 	def configure(self, specs):
 		"""
 		Configure stream from the specified specs context
 		"""
 
-		# Get node
-		node = specs['node']
-		if not "node.%s" % node in self.context:
-			raise AssertionError("Node '%s' was not defined in the specs" % node)
-		node = self.context["node.%s" % node]
+		# Get simple properties
+		self.delay = 0
+		if 'delay' in specs:
+			self.delay = int(specs['delay'])
 
-		# Get app
-		app = specs['app']
-		if not "app.%s" % app in self.context:
-			raise AssertionError("App '%s' was not defined in the specs" % app)
-		app = self.context["app.%s" % app]
-
-		# Get optional app env
-		env = None
-		if 'env' in app:
-			env = app['env']
-			if not "env.%s" % env in self.context:
-				raise AssertionError("env '%s' was not defined in the specs" % env)
-			env = self.context["env.%s" % env]
-
-		########################################
-		# Initialize context variables
-		########################################
-
-		# Define context of current node, parser, app
-		self.context.set( "node", node )
-		self.context.set( "app", app )
-		if env:
-			self.context.set( "env", env )
-			self.context.update( env )
-
-		# Update custom variable definitions
-		if 'define' in node:
-			self.context.update( node['define'] )
-		if 'define' in app:
-			self.context.update( app['define'] )
-		if 'define' in specs:
-			self.context.update( specs['define'] )
-
-		# Render context
-		self.context = self.context.render()
+		# Initialize context
+		self.context = streamContext( self.context, specs )
 
 		########################################
 		# Initialize pipes
@@ -79,13 +103,6 @@ class Stream(object):
 		# Factory bash multiplexer/wrapper
 		self.bashPipe = BashWrapPipe( self.context )
 		self.bashPipe.plug( self.appPipe )
-
-		########################################
-		# Initialize metrics
-		########################################
-
-		self.metrics = Metrics()
-		self.metrics.configure( self.context )
 
 		########################################
 		# Initialize parsers

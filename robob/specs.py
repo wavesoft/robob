@@ -2,9 +2,12 @@
 import os
 import yaml
 import itertools
+import datetime
 
+from robob.reporter import Reporter
+from robob.metrics import Metrics
 from robob.context import Context
-from robob.stream import Stream
+from robob.stream import Stream, streamContext
 
 def deepupdate(original, update):
 	"""
@@ -20,6 +23,23 @@ def deepupdate(original, update):
 			update[key] = value + update[key]
 	return update
 
+class StatsSpecs(object):
+	"""
+	Statistics specicis
+	"""
+
+	def __init__(self):
+		"""
+		Initialize specs defaults
+		"""
+		self.iterations = 1
+
+	def configure(self, specs):
+		"""
+		Configure stats specs
+		"""
+		if 'iterations' in specs:
+			self.iterations = int( specs['iterations'] )
 
 class Specs(object):
 	"""
@@ -30,8 +50,31 @@ class Specs(object):
 		"""
 		Initialize a specifications object from the given filename
 		"""
+
+		self.stats = StatsSpecs()
 		self.filename = filename
 		self.specs = {}
+
+	def getTestVariables(self):
+		"""
+		Return the variable names of the test-cases
+		"""
+
+		# Return keys of test-cases
+		return self.specs['test-cases'].keys()
+
+	def getMetricTitles(self):
+		"""
+		There is already some work done on the metrics class
+		so we are going to re-use it
+		"""
+
+		# Create a metrics object
+		metrics = Metrics()
+		metrics.configure( self.context )
+
+		# Return titles
+		return metrics.titles()
 
 	def createTestContexts(self):
 		"""
@@ -65,17 +108,46 @@ class Specs(object):
 		ans = []
 
 		# Create a stream object for every stream defined in specs
-		for ctx in self.specs['streams']:
+		for specs in self.specs['streams']:
 
 			# Create and configure a stream
-			stream = Stream( testContext )
-			stream.configure( ctx )
+			stream = Stream( testContext, testMetrics )
+			stream.configure( specs )
 
 			# Append to list
 			ans.append( stream )
 
 		# Return streams
 		return ans
+
+	def createReporter(self, baseDir="."):
+		"""
+		Create a reporter according to the specifications
+		"""
+
+		# Get tets name
+		meta = {}
+		name = "test"
+		if 'name' in self.specs:
+			name = self.specs['name']
+		if 'title' in self.specs:
+			meta['Title'] = self.specs['title']
+		if 'meta' in self.specs:
+			meta.update( self.specs['meta'] )
+
+		# Calculate timestamp
+		d = datetime.datetime.now()
+		name += "-%s" % d.strftime("%Y%m%d%H%M%S")
+
+		# Calculate filename
+		filename = "%s/%s.csv" % (baseDir, name)
+
+		# Create reporter
+		reporter = Reporter( filename, meta )
+		reporter.start( self )
+
+		# Return
+		return reporter
 
 	def load(self):
 		"""
@@ -151,3 +223,6 @@ class Specs(object):
 		if 'streamlets' in self.specs:
 			self.context.set( 'streamlet', self.specs['streamlets'] )
 
+		# Apply stats
+		if 'stats' in self.specs:
+			self.stats.configure( self.specs['stats'] )

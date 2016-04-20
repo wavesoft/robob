@@ -88,7 +88,7 @@ environments:
     BASE_DIR: /opt/FairRoot_0MQ
     FAIRSOFT_DIR: /home/lalazari/fair_install/FairSoftInstall
     NANOMSG_DIR: /opt/nanomsg-0.8-ofi
-    LD_LIBRARY_PATH: ${LIBFABRIC_DIR}/lib:${BASE_DIR}/lib:${FAIRSOFT_DIR}/lib:${NANOMSG_DIR}/lib
+    LD_LIBRARY_PATH: "${LIBFABRIC_DIR}/lib:${BASE_DIR}/lib:${FAIRSOFT_DIR}/lib:${NANOMSG_DIR}/lib"
 
 #
 # Involved machines in this benchmark and how

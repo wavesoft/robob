@@ -2,7 +2,7 @@
 
 import sys
 from robob.specs import Specs
-from robbo.driver import TestDriver
+from robob.driver import TestDriver
 
 def help():
 	"""
@@ -22,16 +22,26 @@ specs.load()
 # Create test contexts
 tests = specs.createTestContexts()
 
+# Create reporter
+reporter = specs.createReporter()
+
 # Create stream context for every test
 for test in tests:
 
-	# Get stream objects for this test context
-	streams = specs.createStreams( test )
-
 	# Create a test driver
-	driver = TestDriver( streams, test )
+	driver = TestDriver( specs, test )
 
-	print streams[0].pipe.pipe_stdin()
+	# Start reporting the test
+	reporter.log_start( test )
+
+	# Run multiple iterations of the test
+	for i in range( 0, specs.stats.iterations ):
+		driver.run()
+
+	# Summarize iterations and finalize test
+	reporter.log_end( driver.summarize() )
+
+	# print streams[0].pipe.pipe_stdin()
 	# print streams[0].context
 	# print streams[0].metrics.titles()
 

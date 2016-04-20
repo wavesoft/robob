@@ -1,0 +1,65 @@
+
+#
+# The title of this Benchmark
+#
+name: simple
+title: Simple test
+
+#
+# What metrics to keep in the report how to format them
+#
+metrics:
+
+  - name: iterations
+    aggregate: robob.aggregate.count
+
+#
+# Global variables shared everywhere
+#
+globals:
+  num-msgs: 0
+  queue-size: 16
+
+#
+# Test-cases
+#
+test-cases:
+  delay: [ 1, 2, 3 ]
+
+#
+# Involved machines in this benchmark and how
+# to access them from the robot node
+#
+nodes:
+
+  - name: local
+    host: 127.0.0.1
+    access:
+      - class: robob.access.local
+
+#
+# Applications to be started on the machines
+#
+apps:
+
+  - name: sleeper
+    binary: sleep
+    args: [ "${delay}" ]
+
+#
+# The actual streams to open in order to start
+# the benchmark.
+#
+streams:
+
+  - node: local
+    app: sleeper
+
+  - node: sender # Connect to sender
+    app: bsampler # Run bsampler
+    parser: default # Use default parser to extract metrics
+    streamlets: [ free ] # What streamlets to run
+    finish:
+      timeout: 5 # Finish after 5 seconds timeout
+      metch: 
+
