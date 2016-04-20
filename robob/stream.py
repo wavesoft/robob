@@ -1,4 +1,5 @@
 
+import logging
 from robob.factories import pipeFactory, parserFactory
 from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.metrics import Metrics
@@ -76,6 +77,9 @@ class Stream(object):
 		self.metrics = metrics
 		self.context = context
 
+		# Open logger
+		self.logger = logging.getLogger("stream.%s" % self.name)
+
 		# Update last stream ID
 		Stream.LAST_STREAM_ID += 1
 
@@ -90,6 +94,7 @@ class Stream(object):
 			self.delay = int(specs['delay'])
 		if 'name' in specs:
 			self.name = specs['name']
+			self.logger = logging.getLogger("stream.%s" % self.name)
 
 		# Initialize context
 		self.context = streamContext( self.context, specs )
@@ -126,6 +131,7 @@ class Stream(object):
 
 			# Factory parser & listen for app output
 			parser = parserFactory(self.context["parser.%s" % n], self.context, self.metrics )
+			self.logger.debug("Adding parser %s to app listeners" % n)
 			self.appPipe.listen( parser )
 
 		# Instantiate streamlets
@@ -143,7 +149,8 @@ class Stream(object):
 				pipe = pipeFactory( streamlet, self.context )
 
 				# Plug it on bash pipe
-				self.bashPipe.plug( pipe )
+				self.logger.debug("Adding streamlet %s")
+				self.appPipe.plug( pipe )
 
 				# Get parser(s)
 				parser_names = []
@@ -159,6 +166,7 @@ class Stream(object):
 
 					# Factory parser & listen for app output
 					parser = parserFactory(self.context["parser.%s" % n], self.context, self.metrics )
+					self.logger.debug("Adding parser %s to app listeners" % n)
 					pipe.listen( parser )
 
 		########################################

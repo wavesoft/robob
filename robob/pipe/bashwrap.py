@@ -1,4 +1,5 @@
 
+import logging
 import random
 import string
 import shlex
@@ -18,6 +19,7 @@ class Pipe(PipeBase):
 
 		# Init properties
 		self.script_blocks = []
+		self.logger = logging.getLogger("pipe.bashwrap")
 
 	def pipe_cmdline(self):
 		"""
@@ -111,6 +113,7 @@ class Pipe(PipeBase):
 		"""
 
 		# Trigger to local listeners
+		self.logger.debug("Handling '%s'" % stdout)
 		for l in self.listeners:
 			l.got_stdout( stdout )
 
@@ -129,30 +132,6 @@ class Pipe(PipeBase):
 			raise RuntimeError("Malformed stdout line received (Invalid pipe ID)")
 
 		# Forward to the correct pipe
+		self.logger.debug("Forwarding '%s' to pipe #%i" % ( stdout[end+2:], uid ))
 		self.pipes[uid].pipe_stdout( stdout[end+2:] )
 
-	def pipe_stderr(self, stderr):
-		"""
-		Forward stderr line to the appropriate pipe
-		"""
-
-		# Trigger to local listeners
-		for l in self.listeners:
-			l.got_stderr( stderr )
-
-		# Validate line
-		if stderr[0:2] != "::":
-			raise RuntimeError("Malformed stderr line received (Missing prefix)")
-
-		# Find end
-		end = stderr.find("::",2)
-		if end < 0:
-			raise RuntimeError("Malformed stderr line received (Missing suffix)")
-
-		# Extract ID
-		uid = int(stderr[2:end])
-		if uid >= len(self.pipes):
-			raise RuntimeError("Malformed stderr line received (Invalid pipe ID)")
-
-		# Forward to the correct pipe
-		self.pipes[uid].pipe_stderr( stderr[end+2:] )

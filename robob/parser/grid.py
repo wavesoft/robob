@@ -58,7 +58,7 @@ class Parser(ParserBase):
 				self.anchorconfig.append( (cfg['anchor'], colsep, int(cfg['col']), cfg['name']) )
 
 
-	def parse(self, line):
+	def got_stdout(self, line):
 		"""
 		Match the specified line against our configuration
 		"""

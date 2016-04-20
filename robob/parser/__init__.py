@@ -33,11 +33,12 @@ class ParserBase(ComponentBase, PipeListener):
 		"""
 		[Public] Reset the parser for a new stream
 		"""
-		self.metrics = {}
+		self.metrics.reset()
 
 	def update(self, metric, value):
 		"""
 		[Private] Update the value of the specified metric
 		"""
-		pass
+		# Forward to metrics
+		self.metrics.update( metric, value )
 

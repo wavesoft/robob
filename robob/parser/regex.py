@@ -25,7 +25,7 @@ class Parser(ParserBase):
 		for cfg in config['match']:
 			self.matches.append( re.compile(cfg) )
 
-	def parse(self, line):
+	def got_stdout(self, line):
 		"""
 		Match the specified line against our configuration
 		"""
@@ -37,6 +37,6 @@ class Parser(ParserBase):
 			if grp:
 
 				# Update values
-				for k,v in grp.groupdict():
-					self.update( k, v )
+				for k,v in grp.groupdict().iteritems():
+					self.update( k, float(v) )
 

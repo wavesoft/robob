@@ -39,6 +39,7 @@ class StatsSpecs(object):
 		"""
 		Configure stats specs
 		"""
+		print ">>>>>>> %r" % specs
 		if 'iterations' in specs:
 			self.iterations = int( specs['iterations'] )
 

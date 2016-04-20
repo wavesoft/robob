@@ -172,19 +172,20 @@ class TestStreamThread(Thread):
 
 		# Helper function to handle lines
 		def handle_line(read):
+
+			# Skip empty lines
 			if not read.strip():
 				return
 
-			print ">> %s" % read
-
 			# Guard against exceptions
+			logger.debug("STDIN: %s" % read)
 			try:
 
 				# First apply over expect
 				handled = False
 				for i in range(0, len(expect_out)):
 					if expect_out[i].matches( read ):
-						logger.debug("Found match %s on stdin" % str(expect_out[i]))
+						logger.debug("Expect matched as /%s/ on stdin" % str(expect_out[i]))
 						os.write( proc.fd, expect_out[i].render() )
 						del expect_out[i]
 						handled = True

@@ -17,7 +17,7 @@ load:
 stats:
 
   # How many times to repeat each test-case
-  repeat: 10
+  iterations: 10
 
 #
 # What metrics to keep in the report how to format them

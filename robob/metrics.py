@@ -1,6 +1,9 @@
 
+import logging
 import time
 from robob.factories import aggregateFactory
+
+logger = logging.getLogger("metrics")
 
 #: SI prefix metric (ex. 10^3->k, 10^6->M)
 METRIC_SI = 1
@@ -303,6 +306,7 @@ class Metrics(object):
 
 		# Update the specified metric
 		if name in self.metrics:
+			logger.debug("Updating metric '%s' to '%s'" % (name, str(value)))
 			self.metrics[name].update( value )
 		else:
 			raise AssertionError("Trying to update an undefined metric: '%s'" % name)

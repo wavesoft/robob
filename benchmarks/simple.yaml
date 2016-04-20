@@ -10,8 +10,14 @@ title: Simple test
 #
 metrics:
 
-  - name: iterations
-    aggregate: robob.aggregate.count
+  - name: load
+    aggregate: robob.aggregate.avg
+
+#
+# Statistics
+#
+stats:
+  iterations: 10
 
 #
 # Global variables shared everywhere
@@ -43,8 +49,18 @@ nodes:
 apps:
 
   - name: sleeper
-    binary: sleep
-    args: [ "${delay}" ]
+    binary: bash
+    args: [ "-c", "uptime" ]
+
+#
+# Parser definition
+#
+parsers:
+
+  - name: default
+    class: robob.parser.regex
+    match:
+      - "^.*average: (?P<load>[0-9\\.]+).*$"
 
 #
 # The actual streams to open in order to start
@@ -54,12 +70,4 @@ streams:
 
   - node: local
     app: sleeper
-
-  - node: sender # Connect to sender
-    app: bsampler # Run bsampler
-    parser: default # Use default parser to extract metrics
-    streamlets: [ free ] # What streamlets to run
-    finish:
-      timeout: 5 # Finish after 5 seconds timeout
-      metch: 
-
+    parser: default

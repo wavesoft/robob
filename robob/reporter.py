@@ -93,7 +93,7 @@ class Reporter(object):
 		"""
 
 		# Log the beginning of test and starting date
-		self.fd.write("%i,%i/%i,%s" % \
+		self.fd.write("%i,%i of %i,%s" % \
 			( self.testID, iteration, self.iterations, str(datetime.datetime.now()) ) )
 		self.fd.flush()
 

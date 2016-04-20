@@ -37,7 +37,6 @@ test_id = 0
 for test in tests:
 
 	# Create a test driver
-	logger.info("Running test %i/%i" % (test_id+1, len(tests)))
 	driver = TestDriver( specs, test )
 
 	# Start reporting the test
@@ -47,6 +46,7 @@ for test in tests:
 	for i in range( 0, specs.stats.iterations ):
 
 		# Start log
+		logger.info("Running test %i/%i (iteration %i/%i)" % (test_id+1, len(tests), i+1, specs.stats.iterations))
 		reporter.iteration_start( i+1 )
 
 		# Run driver

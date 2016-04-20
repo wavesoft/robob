@@ -25,6 +25,8 @@ class Aggregate(MetricAggregator):
 			num += v.v
 
 		# Return average suffix
+		if len(values) == 0:
+			return [ 0 ]
 		return [ num / len(values) ]
 
 	def titles(self):
