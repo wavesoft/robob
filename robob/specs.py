@@ -3,6 +3,7 @@ import os
 import yaml
 import itertools
 import datetime
+import logging
 
 from robob.reporter import Reporter
 from robob.metrics import Metrics
@@ -120,20 +121,29 @@ class Specs(object):
 		# Return streams
 		return ans
 
-	def createReporter(self, baseDir="."):
+	def createReporter(self):
 		"""
 		Create a reporter according to the specifications
 		"""
 
-		# Get tets name
-		meta = {}
+		# Get report specifics
+		report = {}
+		if 'report' in self.specs:
+			report = self.specs['report']
+
+		# Get test name
 		name = "test"
 		if 'name' in self.specs:
 			name = self.specs['name']
-		if 'title' in self.specs:
-			meta['Title'] = self.specs['title']
-		if 'meta' in self.specs:
-			meta.update( self.specs['meta'] )
+		if 'name' in report:
+			name = report['name']
+
+		# Get base dir
+		baseDir = "."
+		if os.path.isdir("./reports"):
+			baseDir = "./reports"
+		if 'path' in report:
+			baseDir = report['path']
 
 		# Calculate timestamp
 		d = datetime.datetime.now()
@@ -143,16 +153,13 @@ class Specs(object):
 		filename = "%s/%s.csv" % (baseDir, name)
 
 		# Create reporter
-		reporter = Reporter( filename, meta )
-		reporter.start( self )
-
-		# Return
-		return reporter
+		return Reporter( filename, self )
 
 	def load(self):
 		"""
 		Load the specifications file
 		"""
+		logger = logging.getLogger("specs")
 
 		# Prepare stack
 		stack = [ self.filename ]
@@ -162,7 +169,7 @@ class Specs(object):
 
 			# Get filename and base dir to load
 			fname = stack.pop(0)
-			print "Loading %s..." % fname
+			logger.info("Loading %s" % fname)
 			bdir = os.path.dirname( fname )
 			if not bdir:
 				bdir = "."
@@ -198,6 +205,10 @@ class Specs(object):
 		if 'globals' in self.specs:
 			self.context.update( self.specs['globals'] )
 
+		# Apply stats
+		if 'stats' in self.specs:
+			self.stats.configure( self.specs['stats'] )
+
 		# Import environments
 		if 'environments' in self.specs:
 			for k,v in self.specs['environments'].iteritems():
@@ -223,6 +234,6 @@ class Specs(object):
 		if 'streamlets' in self.specs:
 			self.context.set( 'streamlet', self.specs['streamlets'] )
 
-		# Apply stats
-		if 'stats' in self.specs:
-			self.stats.configure( self.specs['stats'] )
+		# Import meta
+		if 'meta' in self.specs:
+			self.context.set( 'meta', self.specs['meta'] )

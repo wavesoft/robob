@@ -58,8 +58,9 @@ class Pipe(PipeBase):
 
 			# Define fragment with prefixed stdout & stderr
 			s_defs += "function frag_%i {\n" % (i,)
-			s_defs += "{ { %s } 2>&3 | awk >&2 '$0=\"%s\"$0'; } 3>&1 1>&2 | awk '$0=\"%s\"$0';\n" % \
+			s_defs += "{ { %s } 2>&3 | awk >&2 '$0=\"%s\"$0'; exit ${PIPESTATUS[0]}; } 3>&1 1>&2 | awk '$0=\"%s\"$0';\n" % \
 				(frag_script, prefix, prefix)
+			s_defs += "return ${PIPESTATUS[0]}\n"
 			s_defs += "}\n"
 
 			# Define runner function

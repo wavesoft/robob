@@ -1,5 +1,6 @@
 
-from robob.pipe import PipeBase
+import logging
+from robob.pipe import PipeBase, PipeExpect
 
 class Pipe(PipeBase):
 	"""
@@ -14,10 +15,13 @@ class Pipe(PipeBase):
 		# Prepare command line
 		self.username = config['username']
 		self.args = []
+		self.password = None
 
 		# Prepare private key or password
 		if 'key' in config:
 			self.args += [ '-i', config['key'] ]
+		elif 'password' in config:
+			self.password = config['password']
 
 	def pipe_cmdline(self):
 		"""
@@ -25,7 +29,9 @@ class Pipe(PipeBase):
 		"""
 
 		# Prepare args
-		args = [ "/usr/bin/ssh" ]
+		args = [ "/usr/bin/ssh", "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no" ]
+		if self.password:
+			args += [ "-o", "PreferredAuthentications=password" ]
 		args += [ "%s@%s" % (self.username, self.context["node.host"]) ]
 		args += [ "--" ]
 		args += self.args
@@ -35,3 +41,17 @@ class Pipe(PipeBase):
 
 		# Return new arguments
 		return args
+
+	def pipe_expect_stdout(self):
+		"""
+		Add an expect entry to send password when requested
+		"""
+
+		# Prepare expect
+		expect = []
+		if self.password:
+			expect.append( PipeExpect( r"[Pp]assword:", send=self.password+"\r" ) )
+
+		# Forward
+		return expect + PipeBase.pipe_expect_stdout(self)
+

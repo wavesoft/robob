@@ -88,6 +88,8 @@ class Stream(object):
 		self.delay = 0
 		if 'delay' in specs:
 			self.delay = int(specs['delay'])
+		if 'name' in specs:
+			self.name = specs['name']
 
 		# Initialize context
 		self.context = streamContext( self.context, specs )

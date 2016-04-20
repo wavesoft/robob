@@ -1,4 +1,5 @@
 
+import re
 from robob.component import ComponentBase
 
 class PipeListener(object):
@@ -18,6 +19,54 @@ class PipeListener(object):
 		"""
 		pass
 
+class PipeExpect(object):
+	"""
+	A pipe expect entry
+	"""
+
+	def __init__(self, match, callback=None, send=None):
+		"""
+		Initialize a pipe expect entry
+		"""
+
+		# Initialize properties
+		self.repr = match
+		self.match = re.compile(match)
+		self.callback = callback
+		self.send = send
+
+		# Match function result
+		self.found = None
+
+	def matches(self, line):
+		"""
+		Test if the pipe expects
+		"""
+
+		# Return the match if found, None otherwise
+		self.found = self.match.search( line )
+		return self.found
+
+	def render(self):
+		"""
+		Render the result to send after expect
+		"""
+
+		# Return data if only data specified
+		if self.send:
+			return self.send
+
+		# Otherwise use callback
+		elif self.callback:
+			return self.callback( self.found )
+
+		# Nothing found? Return None
+		else:
+			return ""
+
+	def __str__(self):
+		return self.repr
+
 class PipeBase(ComponentBase):
 	"""
 	A chainable pipe object
@@ -31,6 +80,12 @@ class PipeBase(ComponentBase):
 
 		self.pipes = []
 		self.listeners = []
+
+	def configure(self, specs):
+		"""
+		Configure specs
+		"""
+		pass
 
 	def pipe_stdin(self):
 		"""
@@ -75,6 +130,24 @@ class PipeBase(ComponentBase):
 		# Forward to children
 		for p in self.pipes:
 			p.pipe_stderr( stderr )
+
+	def pipe_expect_stdout(self):
+		"""
+		Collect expect entries on stdout
+		"""
+		entries = []
+		for p in self.pipes:
+			entries += p.pipe_expect_stdout()
+		return entries
+
+	def pipe_expect_stderr(self):
+		"""
+		Collect expect entries on stdout
+		"""
+		entries = []
+		for p in self.pipes:
+			entries += p.pipe_expect_stderr()
+		return entries
 
 	def pipe_close(self):
 		"""

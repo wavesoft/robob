@@ -99,7 +99,7 @@ class Context(dict):
 
 		# Replace helper
 		def replace(m):
-			return self.get(m.group(1), "")
+			return str(self.get(m.group(1), ""))
 
 		# Replace all macros in dict
 		if isinstance(where, dict):

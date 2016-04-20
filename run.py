@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import sys
+import logging
+import robob.logger
+
 from robob.specs import Specs
 from robob.driver import TestDriver
 
@@ -15,6 +18,9 @@ def help():
 if len(sys.argv) < 2:
 	help()
 
+# Get a logger
+logger = logging.getLogger("robob")
+
 # Load specs
 specs = Specs( sys.argv[1] )
 specs.load()
@@ -24,27 +30,35 @@ tests = specs.createTestContexts()
 
 # Create reporter
 reporter = specs.createReporter()
+reporter.start()
 
 # Create stream context for every test
+test_id = 0
 for test in tests:
 
 	# Create a test driver
+	logger.info("Running test %i/%i" % (test_id+1, len(tests)))
 	driver = TestDriver( specs, test )
 
 	# Start reporting the test
-	reporter.log_start( test )
+	reporter.test_start( test )
 
 	# Run multiple iterations of the test
 	for i in range( 0, specs.stats.iterations ):
+
+		# Start log
+		reporter.iteration_start( i+1 )
+
+		# Run driver
 		driver.run()
+		reporter.iteration_end( driver.lastResults )
 
 	# Summarize iterations and finalize test
-	reporter.log_end( driver.summarize() )
+	reporter.test_end( driver.summarize() )
 
-	# print streams[0].pipe.pipe_stdin()
-	# print streams[0].context
-	# print streams[0].metrics.titles()
+	# Increment test ID
+	test_id += 1
 
-# print specs.specs
-# print specs.context
-
+# Finalize reporter
+reporter.finalize()
+reporter.close()
