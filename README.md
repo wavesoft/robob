@@ -1,12 +1,31 @@
 # roBOB (robot-benchmark)
 
-**roBOB** is a small python application that simplifies the creation and execution of benchamrks in local and/or remote nodes and automates the collection of results.
+[[https://github.com/wavesoft/robot-benchmark/blob/master/doc/robob.png|alt=robob]]
+ Contact a human
+
+**roBob** is a python tool that simplifies the creation and execution of benchamrks in local and/or remote nodes and automates the collection of results.
 
 It reads rules from a YAML specifications file for how to execute your application and how to analyze it's output. It then connects to the nodes you have specified, executes your command and crawls the output.
 
-## Example
+## Installing
 
-The following benchmark demonstrates how to use **roBOB** to collect bandwidth measurements between two nodes for different TCP window sizes
+Robob has a few requirements. To install them you can use pip:
+
+```
+pip install -r requirements.txt
+```
+
+## Usage
+
+To launch a benchmark you only need to specify the path to the specifications file you want to use:
+
+```
+robob.py benchmarks/mybenchmark.yaml
+```
+
+### Example
+
+The following benchmark demonstrates how to use **roBob** to collect bandwidth measurements between two nodes for different TCP window sizes
 
 ```yaml
 
