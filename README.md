@@ -2,9 +2,11 @@
 
 ![robob](https://raw.githubusercontent.com/wavesoft/robo-benchmark/master/doc/robob.png)
 
-**roBob** is a python tool that simplifies the creation and execution of benchamrks in local and/or remote nodes and automates the collection of results.
+**roBob** is python tool that simplifies the collection of measurements over repetitive tasks, and the automatic creation of reports. 
 
-It reads rules from a YAML specifications file for how to execute your application and how to analyze it's output. It then connects to the nodes you have specified, executes your command and crawls the output.
+Do you have to run some benchmarks? Do you need to run some tasks over night and collect the numbers? Are you using custom solutions to achieve this? Robob helps you achieve this in every environment! It launches your application on a virtual terminal, starts your application, cralws it's output, collects numbers and creates reports for you!
+
+It uses a powerful, extensible, human-readable YAML ruleset for defining your specifications.
 
 ## Installing
 
