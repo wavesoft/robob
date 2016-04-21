@@ -16,7 +16,7 @@ class Reporter(object):
 		self.testID = 0
 		self.specs = specs
 		self.filename = filename
-		self.iterations = specs.stats.iterations
+		self.iterations = int(specs.specs.get("test.iterations", 1))
 		self.testVariables = specs.getTestVariables()
 		self.testTitles = specs.getMetricTitles()
 		self.activeTest = []
@@ -24,7 +24,7 @@ class Reporter(object):
 
 		self.in_iteration = False
 		self.in_test = False
-		self.iterations = 0
+		self.cur_iterations = 0
 
 		# Calculate maximum title width
 		self.testTitleWidth = 1
@@ -109,7 +109,7 @@ class Reporter(object):
 
 		# Enter iteration
 		self.in_iteration = True
-		self.iterations += 1
+		self.cur_iterations += 1
 
 	def iteration_end(self, results, status="Completed", comment="" ):
 		"""
@@ -126,15 +126,21 @@ class Reporter(object):
 
 		# Print values
 		rendered = results.render( True )
+		self.logger.info( "-" * (self.testTitleWidth + 12) )
 		for i in range(0, len(self.testTitles)):
 			self.logger.info(
 				(("%%%is : ") % self.testTitleWidth) % self.testTitles[i] + rendered[i]
 			)
+		self.logger.info( "-" * (self.testTitleWidth + 12) )
 
 	def test_start( self, testContext ):
 		"""
 		Log the start of a groupped test
 		"""
+
+		# Reset iterations
+		self.iterations = int(testContext.get("test.iterations", 1))
+		self.cur_iterations = 0
 
 		# Prepare properties
 		self.testID += 1
@@ -153,7 +159,7 @@ class Reporter(object):
 
 		# Write end and values
 		self.summaryLines[ len(self.summaryLines)-1 ] += \
-			",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.iterations, ",".join(self.activeTest), ",".join(results.render()), comment ) 
+			",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, ",".join(self.activeTest), ",".join(results.render()), comment ) 
 
 		self.in_test = False
 
@@ -175,7 +181,7 @@ class Reporter(object):
 					( str(datetime.datetime.now()), "Interrupted", ",".join(self.activeTest), ",".join( [""] * len(self.testTitles) ), reason ) )
 			else:
 				self.summaryLines[ len(self.summaryLines)-1 ] += \
-					",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.iterations, ",".join(self.activeTest), ",".join(results.render()), reason ) 
+					",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, ",".join(self.activeTest), ",".join(results.render()), reason ) 
 
 		# Finalize
 		self.finalize()

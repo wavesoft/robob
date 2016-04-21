@@ -1,0 +1,42 @@
+
+
+#
+# The 'free' streamlet exposes the following new metrics
+#
+metrics:
+
+  - name: uptime_load
+    title: CPU Load
+    units: "%"
+
+#
+# It also uses a custom parser
+# 
+parsers:
+
+  - name: uptime_load
+    class: robob.parser.regex  
+    match:
+      - "^.*?load average: (?P<uptime_load>[0-9\\.]+).*"
+
+streamlets:
+
+    #
+    # Name and title of this streamlet
+    #
+  - name: uptime
+    title: CPU Load monitor
+
+    #
+    # Which parser to use 
+    #
+    parser: uptime_load
+
+    #
+    # What script (shell script) to run
+    #
+    script: |
+      while true; do
+        uptime
+        sleep 1
+      done

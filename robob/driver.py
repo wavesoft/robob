@@ -75,13 +75,19 @@ class PtyProcess:
 		"""
 		Send signal to process
 		"""
-		os.kill(self.pid, sig)
+		try:
+			os.kill(self.pid, sig)
+		except (OSError, IOError) as e:
+			return
 
 	def terminate(self):
 		"""
 		Send kill signal to process
 		"""
-		os.kill(self.pid, signal.SIGTERM)
+		try:
+			os.kill(self.pid, signal.SIGTERM)
+		except (OSError, IOError) as e:
+			return
 
 	def poll(self):
 		"""
@@ -401,7 +407,7 @@ class TestDriver:
 
 			# If something interrupted, interrupt everything
 			if hasInterrupt:
-				self.logger.warn("Thread '%s' interrupted, so collapsing the test" % t.stream.name)
+				self.logger.warn("Thread '%s' interrupted, so collapsing this test-case" % t.stream.name)
 				self.interrupt(t.interruptReason)
 				break
 

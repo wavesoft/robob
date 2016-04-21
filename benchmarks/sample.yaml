@@ -12,12 +12,15 @@ load:
   - "streamlets/free.yaml"
 
 #
-# Statistical-related configuration
+# Test-related configuration
 #
-stats:
+test:
 
   # How many times to repeat each test-case
   iterations: 10
+
+  # Cooldown time between tests
+  cooldown: 1
 
 #
 # What metrics to keep in the report how to format them

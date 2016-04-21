@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import sys
+import time
 import signal
 import logging
 import robob.logger
 
+from robob.util import time2sec
 from robob.specs import Specs
 from robob.driver import TestDriver
 
@@ -58,19 +60,28 @@ for test in tests:
 	# Create a test driver
 	driver = TestDriver( specs, test )
 
+	# Get some values from test specs
+	iterations = int(test.get("test.iterations", 1))
+	cooldown = time2sec(test.get("test.cooldown", 0))
+
 	# Start reporting the test
 	reporter.test_start( test )
 
 	# Run multiple iterations of the test
-	for i in range( 0, specs.stats.iterations ):
+	for i in range( 0, iterations ):
 
 		# Start log
-		logger.info("Running test %i/%i (iteration %i/%i)" % (test_id+1, len(tests), i+1, specs.stats.iterations))
+		logger.info("Running test %i/%i (iteration %i/%i)" % (test_id+1, len(tests), i+1, iterations))
 		reporter.iteration_start( i+1 )
 
 		# Run driver
 		driver.run()
 		reporter.iteration_end( driver.lastResults, driver.lastStatus )
+
+		# Apply cooldown
+		if cooldown:
+			logger.info("Waiting for %s sec before next test" % test.get("test.cooldown", "0"))
+			time.sleep(cooldown)
 
 	# Summarize iterations and finalize test
 	reporter.test_end( driver.summarize() )

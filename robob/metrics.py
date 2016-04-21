@@ -243,7 +243,7 @@ class Metric(object):
 		# Collect titles from aggregators
 		for a in self.aggregators:
 			for t in a.titles():
-				if self.unitsInValues and self.units:
+				if not self.unitsInValues and self.units:
 					titles.append( "%s %s [%s]" % (self.title, t, self.units) )
 				else:
 					titles.append( "%s %s" % (self.title, t) )

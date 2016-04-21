@@ -153,21 +153,37 @@ class Stream(object):
 
 		# Instantiate streamlets
 		if 'streamlets' in specs:
-			for n in specs['streamlets']:
+			for slt in specs['streamlets']:
+
+				# Expand string shorthand
+				if type(slt) in [str, unicode]:
+					slt = { "streamlet": slt }
+
+				# Get name
+				n = slt['streamlet']
 
 				# Get streamlet
 				if not "streamlet.%s" % n in self.context:
 					raise AssertionError("Streamlet '%s' was not defined in specs" % n)
 				streamlet = self.context["streamlet.%s" % n]
 
+				# Create a streamlet context & merge definitions
+				streamlet_context = self.context.fork()
+				streamlet_context.update( streamlet )
+				del slt['streamlet']
+				streamlet_context.update( slt )
+
+				# Render context
+				streamlet_context = streamlet_context.render()
+
 				# Instantiate streamlet pipe
 				if not 'class' in streamlet:
 					streamlet['class'] = "robob.pipe.script"
-				pipe = pipeFactory( streamlet, self.context )
+				pipe = pipeFactory( streamlet, streamlet_context )
 
 				# Plug it on bash pipe
-				self.logger.debug("Adding streamlet %s")
-				self.appPipe.plug( pipe )
+				self.logger.debug("Adding streamlet %s" % n)
+				self.bashPipe.plug( pipe )
 
 				# Get parser(s)
 				parser_names = []
@@ -178,11 +194,11 @@ class Stream(object):
 
 				# Instantiate parsers
 				for n in parser_names:
-					if not "parser.%s" % n in self.context:
+					if not "parser.%s" % n in streamlet_context:
 						raise AssertionError("Parser '%s' was not defined in the specs" % n)
 
 					# Factory parser & listen for app output
-					parser = parserFactory(self.context["parser.%s" % n], self.context, self.metrics )
+					parser = parserFactory(streamlet_context["parser.%s" % n], streamlet_context, self.metrics )
 					self.logger.debug("Adding parser %s to app listeners" % n)
 					pipe.listen( parser )
 

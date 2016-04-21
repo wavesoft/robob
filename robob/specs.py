@@ -5,6 +5,7 @@ import itertools
 import datetime
 import logging
 
+from robob.util import time2sec
 from robob.reporter import Reporter
 from robob.metrics import Metrics
 from robob.context import Context
@@ -24,24 +25,6 @@ def deepupdate(original, update):
 			update[key] = value + update[key]
 	return update
 
-class StatsSpecs(object):
-	"""
-	Statistics specicis
-	"""
-
-	def __init__(self):
-		"""
-		Initialize specs defaults
-		"""
-		self.iterations = 1
-
-	def configure(self, specs):
-		"""
-		Configure stats specs
-		"""
-		if 'iterations' in specs:
-			self.iterations = int( specs['iterations'] )
-
 class Specs(object):
 	"""
 	Specifications file with nested specifications resolution support
@@ -52,7 +35,6 @@ class Specs(object):
 		Initialize a specifications object from the given filename
 		"""
 
-		self.stats = StatsSpecs()
 		self.filename = filename
 		self.specs = {}
 
@@ -211,9 +193,9 @@ class Specs(object):
 		if 'globals' in self.specs:
 			self.context.update( self.specs['globals'] )
 
-		# Apply stats
-		if 'stats' in self.specs:
-			self.stats.configure( self.specs['stats'] )
+		# Apply test specs
+		if 'test' in self.specs:
+			self.context.set( 'test', self.specs['test'] )
 
 		# Import environments
 		if 'environments' in self.specs:
