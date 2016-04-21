@@ -17,6 +17,15 @@ COLORS = {
 	'ERROR': RED
 }
 
+#: Aliases for constant-sized names
+ALIASES = {
+	'WARNING' : 'WARN',
+	'INFO'	  : 'INFO',
+	'DEBUG'	  : 'DEBG',
+	'CRITICAL': 'CRIT',
+	'ERROR'	  : 'FAIL'
+}
+
 def formatter_message(message, use_color=True):
 	"""
 	Message formatter that expands $RESET and $BOLD macros
@@ -45,7 +54,7 @@ class ColoredFormatter(logging.Formatter):
 		if self.use_color and levelname in COLORS:
 
 			# Add color to level name
-			levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
+			levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + ALIASES[levelname] + RESET_SEQ
 			record.levelname = levelname_color
 
 			# Make name
