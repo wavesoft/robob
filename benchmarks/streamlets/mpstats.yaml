@@ -1,0 +1,15 @@
+
+streamlets:
+
+    #
+    # Name and title of this streamlet
+    #
+  - name: mpstats
+    title: CPU Metric Statistics
+
+    #
+    # Run mpstat infinitely with 1 second delay
+    #
+    script: |
+      mpstat -P ALL 1
+

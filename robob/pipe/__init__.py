@@ -19,6 +19,12 @@ class PipeListener(object):
 		"""
 		pass
 
+	def got_eof(self):
+		"""
+		Process end of stream
+		"""
+		pass
+
 class PipeExpect(object):
 	"""
 	A pipe expect entry
@@ -153,6 +159,12 @@ class PipeBase(ComponentBase):
 		"""
 		Request to close all pipe resources
 		"""
+
+		# Trigger to listeners
+		for l in self.listeners:
+			l.got_eof()
+
+		# Forward to children
 		for p in self.pipes:
 			p.pipe_close()
 

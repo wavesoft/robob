@@ -267,6 +267,9 @@ class TestStreamThread(Thread):
 
 			except Exception as e:
 
+				import traceback
+				traceback.print_exc()
+
 				# In case something went wrong while processing the streams,
 				# kill the process
 				self.logger.error("%s occured: %s" % (e.__class__.__name__, str(e)) )
@@ -291,6 +294,7 @@ class TestStreamThread(Thread):
 
 			# If interrupted, quit
 			if self.interrupted:
+				pipe.pipe_close()
 				return
 
 			# Forward incomplete data as incomplete line
@@ -327,6 +331,7 @@ class TestStreamThread(Thread):
 
 		# If not interrupted, clean shutdown
 		if not self.interrupted and self.proc:
+			pipe.pipe_close()
 			proc.close()
 			self.returncode = proc.returncode
 			self.proc = None

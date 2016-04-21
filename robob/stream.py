@@ -160,6 +160,8 @@ class Stream(object):
 					slt = { "streamlet": slt }
 
 				# Get name
+				if not 'streamlet' in slt:
+					raise AssertionError("Missing 'streamlet' keyword in specs of stream '%s'" % self.name)
 				n = slt['streamlet']
 
 				# Get streamlet
@@ -169,9 +171,8 @@ class Stream(object):
 
 				# Create a streamlet context & merge definitions
 				streamlet_context = self.context.fork()
-				streamlet_context.update( streamlet )
-				del slt['streamlet']
-				streamlet_context.update( slt )
+				streamlet_context.set( "streamlet", streamlet )
+				streamlet_context.set( "streamlet", slt )
 
 				# Render context
 				streamlet_context = streamlet_context.render()
@@ -187,10 +188,10 @@ class Stream(object):
 
 				# Get parser(s)
 				parser_names = []
-				if 'parser' in streamlet:
-					parser_names.append( streamlet['parser'] )
-				elif 'parsers' in streamlet:
-					parser_names += streamlet['parser']
+				if 'streamlet.parser' in streamlet_context:
+					parser_names.append( streamlet_context['streamlet.parser'] )
+				elif 'streamlet.parsers' in streamlet_context:
+					parser_names += streamlet_context['streamlet.parsers']
 
 				# Instantiate parsers
 				for n in parser_names:

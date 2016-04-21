@@ -15,7 +15,7 @@ class ParserBase(ComponentBase, PipeListener):
 		PipeListener.__init__(self)
 
 		# Initialize metrics
-		self.metrics = metrics
+		self._metrics = metrics
 
 	def got_stdout(self, line):
 		"""
@@ -33,12 +33,12 @@ class ParserBase(ComponentBase, PipeListener):
 		"""
 		[Public] Reset the parser for a new stream
 		"""
-		self.metrics.reset()
+		self._metrics.reset()
 
 	def update(self, metric, value):
 		"""
 		[Private] Update the value of the specified metric
 		"""
 		# Forward to metrics
-		self.metrics.update( metric, value )
+		self._metrics.update( metric, value )
 

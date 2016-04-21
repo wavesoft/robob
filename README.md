@@ -86,7 +86,7 @@ streams:
     - node: node2 # Also start on node2 ..
       app: client # A client application ..
       delay: 1 # With an 1 second delay ..
-      variables: # That connects to the IP address of the node2
+      define: # That connects to the IP address of the node2
         REMOTE: "${node.node2.host}"
 
 ```

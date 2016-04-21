@@ -3,7 +3,7 @@ import re
 import copy
 
 #: Macro regex
-RE_MACRO = re.compile(r'\$\{(\w+)\}')
+RE_MACRO = re.compile(r'\$\{([\w\.]+)\}')
 
 class Context(dict):
 	"""
@@ -88,38 +88,57 @@ class Context(dict):
 		Replace all macros in this context and return a
 		dictionary with all values
 		"""
+		dictionary = copy.deepcopy(self)
+		replaced = True
 
-		# Replace all macros in the context as dictionary
-		return Context( self.replaceMacros( self ) )
+		# Keep replacing until there are no other macros to replace
+		while replaced:
+			# Replace and check if this was indeed replaced
+			(dictionary, replaced) = self.replaceMacros( dictionary )
 
-	def replaceMacros(self, where):
+		# Return a new context with the new dictionary
+		return Context( dictionary )
+
+	def replaceMacros(self, where, _firstCall=True):
 		"""
 		Replace all macros in context to the given string
 		"""
+		unused = False
+
+		# Check if a value was indeed updated
+		if _firstCall:
+			self._did_replace = False
 
 		# Replace helper
 		def replace(m):
-			return str(self.get(m.group(1), ""))
+			key = m.group(1)
+			if key in self:
+				# Return replaced & mark action
+				self._did_replace = True
+				return str(self[key])
+			else:
+				# Return un-replaced
+				return m.group(0)
 
 		# Replace all macros in dict
 		if isinstance(where, dict):
 			ans = {}
 			for k,v in where.iteritems():
-				ans[k] = self.replaceMacros(v)
-			return ans
+				(ans[k], unused) = self.replaceMacros(v, False)
+			return (ans, self._did_replace)
 
 		# Replace all macros in list
 		elif isinstance(where, list):
 			ans = []
 			for v in where:
-				ans.append( self.replaceMacros(v) )
-			return ans
+				ans.append( self.replaceMacros(v, False)[0] )
+			return (ans, self._did_replace)
 
 		# Replace all macros in string
 		elif type(where) in [str, unicode]:
-			return RE_MACRO.sub( replace, where )
+			return (RE_MACRO.sub( replace, where ), self._did_replace)
 
 		# Pass through everything else
 		else:
-			return where
+			return (where, self._did_replace)
 

@@ -90,6 +90,7 @@ class Specs(object):
 		"""
 		ans = []
 
+
 		# Create a stream object for every stream defined in specs
 		for specs in self.specs['streams']:
 
