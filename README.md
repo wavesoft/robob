@@ -1,7 +1,6 @@
 # roBOB (robot-benchmark)
 
-[[https://github.com/wavesoft/robot-benchmark/blob/master/doc/robob.png|alt=robob]]
- Contact a human
+![robob](https://raw.githubusercontent.com/wavesoft/robo-benchmark/master/doc/robob.png)
 
 **roBob** is a python tool that simplifies the creation and execution of benchamrks in local and/or remote nodes and automates the collection of results.
 
