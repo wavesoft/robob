@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import signal
 import logging
 import robob.logger
 
@@ -32,7 +33,25 @@ tests = specs.createTestContexts()
 reporter = specs.createReporter()
 reporter.start()
 
+# Gracefully shutdown
+def cleanup(signal, frame):
+
+	# Interrupt reporter
+	logger.warn("Received break signal from the user")	
+
+	# Interrupt driver and reporter
+	driver.interrupt()
+	reporter.interrupt( driver.summarize() )
+	reporter.close()
+
+	# Exit with error
+	sys.exit(1)
+
+# Trap shutdown signal
+signal.signal(signal.SIGINT, cleanup)
+
 # Create stream context for every test
+driver = None
 test_id = 0
 for test in tests:
 
@@ -51,7 +70,7 @@ for test in tests:
 
 		# Run driver
 		driver.run()
-		reporter.iteration_end( driver.lastResults )
+		reporter.iteration_end( driver.lastResults, driver.lastStatus )
 
 	# Summarize iterations and finalize test
 	reporter.test_end( driver.summarize() )

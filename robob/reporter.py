@@ -22,17 +22,27 @@ class Reporter(object):
 		self.activeTest = []
 		self.summaryLines = []
 
+		self.in_iteration = False
+		self.in_test = False
+		self.iterations = 0
+
+		# Calculate maximum title width
+		self.testTitleWidth = 1
+		for t in self.testTitles:
+			if len(t) > self.testTitleWidth:
+				self.testTitleWidth = len(t)
+
 		# Open logger
 		self.logger = logging.getLogger("report")
 
 		# Collect metadata
-		self.meta = {}
-		if 'meta' in specs.context:
-			self.meta.update( specs.context['meta'] )
+		self.notes = {}
+		if 'notes' in specs.context:
+			self.notes.update( specs.context['notes'] )
 		if 'title' in specs.specs:
-			self.meta['Title'] = specs.specs['title']
+			self.notes['Title'] = specs.specs['title']
 		if 'desc' in specs.specs:
-			self.meta['Description'] = specs.specs['desc']
+			self.notes['Description'] = specs.specs['desc']
 
 	def start( self ):
 		"""
@@ -48,7 +58,7 @@ class Reporter(object):
 		self.fd = open(self.filename, "w")
 
 		# Write title & Columns
-		for k,v in self.meta.iteritems():
+		for k,v in self.notes.iteritems():
 			self.fd.write("%s,%s\n" % (k, v))
 		self.fd.write("Started on,%s\n" % str(datetime.datetime.now()))
 		self.fd.write("\n")
@@ -77,7 +87,7 @@ class Reporter(object):
 		self.fd.write("\n")
 		self.fd.write("Summarized numbers\n")
 		self.fd.write("\n")
-		self.fd.write("Num,Started,Ended,Status,%s,%s,Comment\n" % \
+		self.fd.write("Num,Started,Ended,Iterations,%s,%s,Comment\n" % \
 			( ",".join(self.testVariables),  ",".join(self.testTitles) ) )
 
 		# Write summarization lines
@@ -97,6 +107,10 @@ class Reporter(object):
 			( self.testID, iteration, self.iterations, str(datetime.datetime.now()) ) )
 		self.fd.flush()
 
+		# Enter iteration
+		self.in_iteration = True
+		self.iterations += 1
+
 	def iteration_end(self, results, status="Completed", comment="" ):
 		"""
 		Log the completion of a test
@@ -107,6 +121,16 @@ class Reporter(object):
 			( str(datetime.datetime.now()), status, ",".join(self.activeTest), ",".join(results.render()), comment ) )
 		self.fd.flush()
 
+		# Exit iteration
+		self.in_iteration = False
+
+		# Print values
+		rendered = results.render( True )
+		for i in range(0, len(self.testTitles)):
+			self.logger.info(
+				(("%%%is : ") % self.testTitleWidth) % self.testTitles[i] + rendered[i]
+			)
+
 	def test_start( self, testContext ):
 		"""
 		Log the start of a groupped test
@@ -115,19 +139,44 @@ class Reporter(object):
 		# Prepare properties
 		self.testID += 1
 		self.activeTest = [ str(testContext[x]) for x in self.testVariables ]
+		self.in_test = True
 
 		# Keep for summary
 		self.summaryLines.append(
-				"%i,%s," % ( self.testID, str(datetime.datetime.now()) )
+				"%i,%s" % ( self.testID, str(datetime.datetime.now()) )
 			)
 
-	def test_end( self, results, status="Completed", comment="" ):
+	def test_end( self, results, comment="" ):
 		"""
 		Log the end of a groupped test
 		"""
 
 		# Write end and values
 		self.summaryLines[ len(self.summaryLines)-1 ] += \
-			",%s,%s,%s,%s,%s\n" % ( str(datetime.datetime.now()), status, ",".join(self.activeTest), ",".join(results.render()), comment ) 
+			",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.iterations, ",".join(self.activeTest), ",".join(results.render()), comment ) 
 
+		self.in_test = False
+
+
+	def interrupt(self, results, reason="Interrupted by the user"):
+		"""
+		User interrupted the test, log the action
+		"""
+
+		# Finalize iterations
+		if self.in_iteration:
+			self.fd.write(",%s,%s,%s,%s,%s\n" % \
+				( str(datetime.datetime.now()), "Interrupted", ",".join(self.activeTest), ",".join( [""] * len(self.testTitles) ), reason ) )
+
+		# Finalize test
+		if self.in_test:
+			if not results:
+				self.fd.write(",%s,%s,%s,%s,%s\n" % \
+					( str(datetime.datetime.now()), "Interrupted", ",".join(self.activeTest), ",".join( [""] * len(self.testTitles) ), reason ) )
+			else:
+				self.summaryLines[ len(self.summaryLines)-1 ] += \
+					",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.iterations, ",".join(self.activeTest), ",".join(results.render()), reason ) 
+
+		# Finalize
+		self.finalize()
 

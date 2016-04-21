@@ -29,12 +29,12 @@ class Pipe(PipeBase):
 		"""
 
 		# Prepare args
-		args = [ "/usr/bin/ssh", "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no" ]
+		args = [ "/usr/bin/ssh", "-t", "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no" ]
 		if self.password:
 			args += [ "-o", "PreferredAuthentications=password" ]
 		args += [ "%s@%s" % (self.username, self.context["node.host"]) ]
-		args += [ "--" ]
 		args += self.args
+		args += [ "--" ]
 
 		# Append child command-lines
 		args += super(Pipe, self).pipe_cmdline()

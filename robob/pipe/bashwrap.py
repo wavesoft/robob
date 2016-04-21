@@ -1,10 +1,54 @@
 
+import sys
 import logging
 import random
 import string
 import shlex
 import subprocess
 from robob.pipe import PipeBase
+
+def list2cmdline(seq):
+	"""
+	Modified version of the original from subprocess.py
+	"""
+	result = []
+	needquote = False
+	for arg in seq:
+		bs_buf = []
+
+		# Add a space to separate this argument from the others
+		if result:
+			result.append(' ')
+
+		needquote = (" " in arg) or ("\t" in arg) or (";" in arg) or not arg
+		if needquote:
+			result.append('"')
+
+		for c in arg:
+			if c == '\\':
+				# Don't know if we need to double yet.
+				bs_buf.append(c)
+			elif c == '"':
+				# Double backslashes.
+				result.append('\\' * len(bs_buf)*2)
+				bs_buf = []
+				result.append('\\"')
+			else:
+				# Normal char
+				if bs_buf:
+					result.extend(bs_buf)
+					bs_buf = []
+				result.append(c)
+
+		# Add remaining backslashes, if any.
+		if bs_buf:
+			result.extend(bs_buf)
+
+		if needquote:
+			result.extend(bs_buf)
+			result.append('"')
+
+	return ''.join(result)
 
 class Pipe(PipeBase):
 	"""
@@ -27,7 +71,7 @@ class Pipe(PipeBase):
 		"""
 
 		# We are piping everything to bash
-		return [ "/bin/bash" ]
+		return [ "/usr/bin/stdbuf", "-oL", "-eL", "/bin/bash", "/dev/stdin" ]
 
 	def pipe_stdin(self):
 		"""
@@ -51,7 +95,7 @@ class Pipe(PipeBase):
 			if cmdline[0] == "eval":
 				frag_script = " ".join(cmdline[1:])
 			else:
-				frag_script = subprocess.list2cmdline(cmdline)
+				frag_script = list2cmdline(cmdline)
 
 			# Add semi-colon at the end of the fragment if we don't already
 			# have a command terminator
@@ -89,7 +133,9 @@ class Pipe(PipeBase):
 		s_killtrap += "}\ntrap killer_@@ @@\n"
 
 		# Compile script
-		script = "# Definitions\n"
+		script = "# Prepare\n"
+		script += "stty -echo\n"
+		script += "# Definitions\n"
 		script += s_defs
 		script += "# Signal hooks\n"
 		script += s_killtrap.replace("@@", "SIGINT")
@@ -97,12 +143,16 @@ class Pipe(PipeBase):
 		script += s_killtrap.replace("@@", "SIGKILL")
 		script += "# Run script\n"
 		script += s_run
+		script += "echo ::I::Application started\n"
 		script += "# Wait for first fragment complete\n"
 		script += "wait $FRAG_PID_0\n"
 		script += "RET=$?\n"
+		script += "echo ::I::Application exited with code=$RET\n"
 		script += "# Interrupt the rest\n"
 		script += "killer_SIGINT\n"
 		script += "exit $RET\n"
+
+		# sys.stdout.write("----BEGIN SCRIPT----\n%s\n----END SCRIPT----" % script)
 
 		# Return script
 		return script
@@ -119,17 +169,32 @@ class Pipe(PipeBase):
 
 		# Validate line
 		if stdout[0:2] != "::":
-			raise RuntimeError("Malformed stdout line received (Missing prefix)")
+			self.logger.debug("Ignoring line (Missing prefix): %s" % stdout)
+			return
 
 		# Find end
 		end = stdout.find("::",2)
 		if end < 0:
-			raise RuntimeError("Malformed stdout line received (Missing suffix)")
+			self.logger.debug("Ignoring line (Missing suffix): %s" % stdout)
+			return
+
+		# Extract line code
+		lc = stdout[2:end]
+		if lc == "I":
+			self.logger.info(stdout[end+2:])
+			return
+		elif lc == "W":
+			self.logger.warn(stdout[end+2:])
+			return
+		elif lc == "E":
+			self.logger.error(stdout[end+2:])
+			return
 
 		# Extract ID
-		uid = int(stdout[2:end])
+		uid = int(lc)
 		if uid >= len(self.pipes):
-			raise RuntimeError("Malformed stdout line received (Invalid pipe ID)")
+			self.logger.debug("Ignoring line (Invalid pipe ID): %s" % stdout)
+			return
 
 		# Forward to the correct pipe
 		self.logger.debug("Forwarding '%s' to pipe #%i" % ( stdout[end+2:], uid ))

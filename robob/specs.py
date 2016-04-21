@@ -162,13 +162,14 @@ class Specs(object):
 		logger = logging.getLogger("specs")
 
 		# Prepare stack
-		stack = [ self.filename ]
+		filestack = [ self.filename ]
+		specsstack = [ ]
 
-		# Start processing items on stack
-		while len(stack):
+		# Start processing items on filestack
+		while len(filestack):
 
 			# Get filename and base dir to load
-			fname = stack.pop(0)
+			fname = filestack.pop(0)
 			logger.info("Loading %s" % fname)
 			bdir = os.path.dirname( fname )
 			if not bdir:
@@ -180,7 +181,7 @@ class Specs(object):
 				specs = yaml.load(buf)
 
 			# Check if there are other files to
-			# load, and therefore add them on stack
+			# load, and therefore add them on filestack
 			if 'load' in specs:
 
 				# Make sure it's list
@@ -190,14 +191,19 @@ class Specs(object):
 				# Iterate over specs
 				for f in specs['load']:
 					if f[0] == "/":
-						stack.append(f)
+						filestack.append(f)
 					else:
-						stack.append( "%s/%s" % (bdir, f) )
+						filestack.append( "%s/%s" % (bdir, f) )
 
 				# Remove 'load'
 				del specs['load']
 
-			# Merge specs
+			# Keep specs
+			specsstack.append( specs )
+
+		# Merge specs in reverse order so that loaded
+		# files have lower priority than the ones that loaded them
+		for specs in reversed( specsstack ):
 			self.specs = deepupdate( self.specs, specs )
 
 		# Open a global context & import global variables
@@ -234,6 +240,6 @@ class Specs(object):
 		if 'streamlets' in self.specs:
 			self.context.set( 'streamlet', self.specs['streamlets'] )
 
-		# Import meta
-		if 'meta' in self.specs:
-			self.context.set( 'meta', self.specs['meta'] )
+		# Import notes
+		if 'notes' in self.specs:
+			self.context.set( 'notes', self.specs['notes'] )

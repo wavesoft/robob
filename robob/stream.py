@@ -1,5 +1,7 @@
 
 import logging
+
+from robob.util import time2sec
 from robob.factories import pipeFactory, parserFactory
 from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.metrics import Metrics
@@ -38,6 +40,7 @@ def streamContext( context, specs ):
 	########################################
 
 	# Define context of current node, parser, app
+	context.set( "stream", specs )
 	context.set( "node", node )
 	context.set( "app", app )
 	if env:
@@ -76,6 +79,8 @@ class Stream(object):
 		self.accessPipe = None
 		self.metrics = metrics
 		self.context = context
+		self.timeout = None
+		self.active = True
 
 		# Open logger
 		self.logger = logging.getLogger("stream.%s" % self.name)
@@ -91,13 +96,25 @@ class Stream(object):
 		# Get simple properties
 		self.delay = 0
 		if 'delay' in specs:
-			self.delay = int(specs['delay'])
+			self.delay = time2sec(specs['delay'])
+		if 'timeout' in specs:
+			self.timeout = time2sec(specs['timeout'])
 		if 'name' in specs:
 			self.name = specs['name']
 			self.logger = logging.getLogger("stream.%s" % self.name)
 
 		# Initialize context
 		self.context = streamContext( self.context, specs )
+
+		# Check if stream is active
+		if 'stream.active' in self.context:
+			self.active = self.context['stream.active']
+			if type(self.active) in [str, unicode]:
+				self.active = self.active.lower() in [ "1", "yes", "true", "on" ]
+
+		# If not active exit
+		if not self.active:
+			return
 
 		########################################
 		# Initialize pipes

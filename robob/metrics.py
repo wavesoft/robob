@@ -45,13 +45,27 @@ def summarize( results ):
 	# Create a results were to collect everything
 	ans = MetricsResults()
 
+	# If no results, return nothing
+	if not results:
+		return ans
+
 	# Metrics are always the same, so just get the first ones
 	ans.metrics = results[0].metrics
 	ans.values = [0] * len(results[0].values)
 
 	# Summarize values
 	for r in results:
-		ans.values = [x + y for x, y in zip(ans.values, r.values)]
+		i = 0
+		for a,b in zip(ans.values, r.values):
+			if a is None and b is None:
+				ans.values[i] = None
+			elif a is None:
+				ans.values[i] = b+b
+			elif b is None:
+				ans.values[i] = a+a
+			else:
+				ans.values[i] = a+b
+			i += 1
 
 	# Average
 	num = len(results)
@@ -124,12 +138,15 @@ class Metric(object):
 		self.decimals = 2
 		self.aggregators = []
 		self.resetTime = 0
+		self.unitsInValues = False
 
 		# Update optional
 		if 'title' in config:
 			self.title = config['title']
 		if 'units' in config:
 			self.units = config['units']
+		if 'showunits' in config:
+			self.unitsInValues = config['showunits']
 		if 'initial' in config:
 			self.initial = config['initial']
 		if 'metric' in config:
@@ -151,6 +168,8 @@ class Metric(object):
 			if type(aggregate) is dict:
 				aggregate = [ aggregate ]
 			for a in aggregate:
+				if type(a) in [str, unicode]:
+					a = {"class": a}
 				self.aggregators.append( aggregateFactory(a, self) )
 
 		# If we have no aggregators, add a default
@@ -176,33 +195,44 @@ class Metric(object):
 		self.series = []
 		self.resetTime = time.time()
 
-	def format(self, value):
+	def format(self, value, withunits=False):
 		"""
 		Human-readable formatting of the given metric value
 		"""
 
-		# Get units
-		u = self.units
+		# Handle none
+		if value is None:
+			return "(Missing)"
 
 		# Apply scale to value
 		v = value * self.scale
+		u = ""
 
-		# Apply prefix
-		if self.metric == METRIC_SI:
-			if v < 1:
-				(v, sf) = _apply_prefix( v, 0.001, [ 'm','u','n','p','f','a' ] )
-			else:
-				(v, sf) = _apply_prefix( v, 1000, [ 'k','M','G','T','P','E' ] )
-			u = sf + u
-		elif self.metric == METRIC_IEC:
-			(v, sf) = _apply_prefix( v, 1024, [ 'k','M','G','T','P','E' ] )
-			u = sf + u
+		# If we should show units in the values include them now
+		if self.unitsInValues or withunits:
+
+			# Get units
+			u = self.units
+
+			# Apply prefix
+			if self.metric == METRIC_SI:
+				if v < 1:
+					(v, sf) = _apply_prefix( v, 0.001, [ 'm','u','n','p','f','a' ] )
+				else:
+					(v, sf) = _apply_prefix( v, 1000, [ 'k','M','G','T','P','E' ] )
+				u = sf + u
+			elif self.metric == METRIC_IEC:
+				(v, sf) = _apply_prefix( v, 1024, [ 'k','M','G','T','P','E' ] )
+				u = sf + u
+
+			# Add space
+			u = " %s" % u
 
 		# Format decimals
 		s = ('{0:.%ig}' % self.decimals).format(v)
 
 		# Return value with units
-		return s + " " + u
+		return s + u
 
 	def titles(self):
 		"""
@@ -213,7 +243,10 @@ class Metric(object):
 		# Collect titles from aggregators
 		for a in self.aggregators:
 			for t in a.titles():
-				titles.append( self.title + " " + t )
+				if self.unitsInValues and self.units:
+					titles.append( "%s %s [%s]" % (self.title, t, self.units) )
+				else:
+					titles.append( "%s %s" % (self.title, t) )
 
 		# Return titles
 		return titles
@@ -258,7 +291,7 @@ class MetricsResults(object):
 			self.values.append( v )
 			self.metrics.append( metric )
 
-	def render(self):
+	def render(self, withunits=False):
 		"""
 		Render the results to human-readable indicators
 		"""
@@ -266,7 +299,7 @@ class MetricsResults(object):
 
 		# Iterate over values and render them
 		for i in range(0, len(self.values)):
-			results.append( self.metrics[i].format( self.values[i] ) )
+			results.append( self.metrics[i].format( self.values[i], withunits ) )
 
 		# Return results
 		return results
