@@ -77,7 +77,7 @@ for test in tests:
 
 		# Run driver
 		driver.run()
-		reporter.iteration_end( driver.lastResults, driver.lastStatus )
+		reporter.iteration_end( driver.lastResults, driver.lastStatus, driver.lastComment )
 
 		# Apply cooldown
 		if cooldown:

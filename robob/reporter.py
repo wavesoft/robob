@@ -26,6 +26,7 @@ class Reporter(object):
 		self.in_iteration = False
 		self.in_test = False
 		self.cur_iterations = 0
+		self.ok_iterations = 0
 
 		# Calculate maximum title width
 		self.testTitleWidth = 1
@@ -88,7 +89,7 @@ class Reporter(object):
 		self.fd.write("\n")
 		self.fd.write("Summarized numbers\n")
 		self.fd.write("\n")
-		self.fd.write("Num,Started,Ended,Iterations,%s,%s,Comment\n" % \
+		self.fd.write("Num,Started,Ended,Iterations,Successful,%s,%s,Comment\n" % \
 			( ",".join(self.testVariables),  ",".join(self.testTitles) ) )
 
 		# Write summarization lines
@@ -122,6 +123,10 @@ class Reporter(object):
 			( str(datetime.datetime.now()), status, ",".join(self.activeTest), ",".join(results.render()), comment ) )
 		self.fd.flush()
 
+		# Count successful iterations
+		if status == "Completed":
+			self.ok_iterations += 1
+
 		# Exit iteration
 		self.in_iteration = False
 
@@ -142,6 +147,7 @@ class Reporter(object):
 		# Reset iterations
 		self.iterations = int(testContext.get("test.iterations", 1))
 		self.cur_iterations = 0
+		self.ok_iterations = 0
 
 		# Prepare properties
 		self.testID += 1
@@ -160,7 +166,7 @@ class Reporter(object):
 
 		# Write end and values
 		self.summaryLines[ len(self.summaryLines)-1 ] += \
-			",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, ",".join(self.activeTest), ",".join(results.render()), comment ) 
+			",%s,%i,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, self.ok_iterations, ",".join(self.activeTest), ",".join(results.render()), comment ) 
 
 		self.in_test = False
 
@@ -182,7 +188,7 @@ class Reporter(object):
 					( str(datetime.datetime.now()), "Interrupted", ",".join(self.activeTest), ",".join( [""] * len(self.testTitles) ), reason ) )
 			else:
 				self.summaryLines[ len(self.summaryLines)-1 ] += \
-					",%s,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, ",".join(self.activeTest), ",".join(results.render()), reason ) 
+					",%s,%i,%i,%s,%s,%s\n" % ( str(datetime.datetime.now()), self.cur_iterations, self.ok_iterations, ",".join(self.activeTest), ",".join(results.render()), reason ) 
 
 		# Finalize
 		self.finalize()

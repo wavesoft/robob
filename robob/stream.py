@@ -95,14 +95,14 @@ class Stream(object):
 		"""
 
 		# If missing, return none
-		if not 'report.output' in self.context:
+		if not 'report.keep_output' in self.context:
 			return None
 
 		# Calculate test values
 		testval = "+".join([ "%s-%s" % (k, str(v)) for k,v in self.context['curr'].iteritems() ])
 
 		# Calculate filename
-		filename = self.context['report.output'] + "/"
+		filename = self.context['report.keep_output'] + "/"
 		filename += self.context['report.name']
 		filename += "-%s" % self.context['report.timestamp']
 		filename += "-%s-%s" % (self.name, testval)
@@ -177,8 +177,18 @@ class Stream(object):
 			if not "parser.%s" % n in self.context:
 				raise AssertionError("Parser '%s' was not defined in the specs" % n)
 
-			# Factory parser & listen for app output
+			# Factory parser
 			parser = parserFactory(self.context["parser.%s" % n], self.context, self.metrics )
+
+			# Apply alias mapping & filter if exists
+			if 'stream.alias' in self.context:
+				self.logger.debug("Adding alias mapping to %s: %r" % (n, self.context['stream.alias']))
+				parser.set_alias( self.context['stream.alias'] )
+			if 'stream.filter' in self.context:
+				self.logger.debug("Adding metrics filter to %s: %r" % (n, self.context['stream.filter']))
+				parser.set_filter( self.context['stream.filter'] )
+
+			# Listen for app output
 			self.logger.debug("Adding parser %s to app listeners" % n)
 			self.appPipe.listen( parser )
 
@@ -229,9 +239,27 @@ class Stream(object):
 					if not "parser.%s" % n in streamlet_context:
 						raise AssertionError("Parser '%s' was not defined in the specs" % n)
 
-					# Factory parser & listen for app output
+					# Factory parser
 					parser = parserFactory(streamlet_context["parser.%s" % n], streamlet_context, self.metrics )
-					self.logger.debug("Adding parser %s to app listeners" % n)
+
+					# Apply stream alias mapping & filter if exists
+					if 'stream.alias' in streamlet_context:
+						self.logger.debug("Adding alias mapping to %s: %r" % (n, streamlet_context['stream.alias']))
+						parser.set_alias( streamlet_context['stream.alias'] )
+					if 'stream.filter' in streamlet_context:
+						self.logger.debug("Adding metrics filter to %s: %r" % (n, streamlet_context['stream.filter']))
+						parser.set_filter( streamlet_context['stream.filter'] )
+
+					# Apply streamlet alias mapping & filter if exists
+					if 'streamlet.alias' in streamlet_context:
+						self.logger.debug("Adding streamlet alias mapping to %s: %r" % (n, streamlet_context['streamlet.alias']))
+						parser.set_alias( streamlet_context['streamlet.alias'] )
+					if 'streamlet.filter' in streamlet_context:
+						self.logger.debug("Adding streamlet metrics filter to %s: %r" % (n, streamlet_context['streamlet.filter']))
+						parser.set_filter( streamlet_context['streamlet.filter'] )
+
+					# Factory parser & listen for app output
+					self.logger.debug("Adding parser %s to streamlet listeners" % n)
 					pipe.listen( parser )
 
 		########################################

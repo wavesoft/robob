@@ -204,7 +204,7 @@ class Metric(object):
 
 		# Handle none
 		if value is None:
-			return "(Missing)"
+			return "(None)"
 
 		# Apply scale to value
 		v = value * self.scale
@@ -353,7 +353,7 @@ class Metrics(object):
 			logger.debug("Updating metric '%s' to '%s'" % (name, str(value)))
 			self.metrics[name].update( value )
 		else:
-			raise AssertionError("Trying to update an undefined metric: '%s'" % name)
+			logger.warn("Trying to update an unknown metric: '%s'" % name)
 
 	def titles(self):
 		"""

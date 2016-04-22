@@ -16,16 +16,18 @@ class ParserBase(ComponentBase, PipeListener):
 
 		# Initialize metrics
 		self._metrics = metrics
+		self._alias = {}
+		self._filter = None
 
 	def got_stdout(self, line):
 		"""
-		Process an stdout line
+		[Public] Process an stdout line
 		"""
 		pass
 
 	def got_stderr(self, line):
 		"""
-		Process an stderr line
+		[Public] UProcess an stderr line
 		"""
 		pass
 
@@ -35,10 +37,31 @@ class ParserBase(ComponentBase, PipeListener):
 		"""
 		self._metrics.reset()
 
+	def set_alias(self, aliases):
+		"""
+		[Public] Update alias mapping
+		"""
+		self._alias = aliases
+
+	def set_filter(self, metrics):
+		"""
+		[Public] Update metrics filter
+		"""
+		self._filter = metrics
+
 	def update(self, metric, value):
 		"""
 		[Private] Update the value of the specified metric
 		"""
+
+		# Skip metrics in filter
+		if not self._filter is None and not metric in self._filter:
+			return
+
+		# Replace alias if found
+		if metric in self._alias:
+			metric = self._alias[metric]
+
 		# Forward to metrics
 		self._metrics.update( metric, value )
 

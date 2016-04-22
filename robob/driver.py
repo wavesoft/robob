@@ -369,6 +369,7 @@ class TestDriver:
 		self.results = []
 		self.lastResults = None
 		self.lastStatus = ""
+		self.lastComment = ""
 
 	def run(self):
 		"""
@@ -424,6 +425,14 @@ class TestDriver:
 			# Otherwise wait for a sec before retry
 			if hasAlive:
 				time.sleep(0.1)
+
+		# Update exit code status
+		for t in self.threads:
+			if t.returncode != 0:
+				self.lastStatus = "Error"
+				if self.lastComment:
+					self.lastComment += "; "
+				self.lastComment += "%s returned=%i" % (t.stream.name, t.returncode)
 
 		# Reap threads
 		for t in self.threads:

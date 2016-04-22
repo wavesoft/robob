@@ -2,7 +2,7 @@
 
 ![robob](https://raw.githubusercontent.com/wavesoft/robo-benchmark/master/doc/robob.png)
 
-**roBob** is python tool that simplifies the collection of measurements over repetitive tasks, and the automatic creation of reports. 
+**roBob** is python automation tool that simplifies the collection of measurements over repetitive tasks, and the automatic creation of reports. 
 
 Do you have to run some benchmarks? Do you need to run some tasks over night and collect the numbers? Are you using custom solutions to achieve this? Robob helps you achieve this in every environment! It launches your application on a virtual terminal, starts your application, cralws it's output, collects numbers and creates reports for you!
 
