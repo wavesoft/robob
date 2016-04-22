@@ -135,7 +135,7 @@ class Metric(object):
 		self.initial = 0
 		self.series = []
 		self.units = ""
-		self.metric = 0
+		self.prefix = 0
 		self.scale = 1.0
 		self.decimals = 2
 		self.aggregators = []
@@ -151,12 +151,12 @@ class Metric(object):
 			self.unitsInValues = config['showunits']
 		if 'initial' in config:
 			self.initial = config['initial']
-		if 'metric' in config:
-			m = config['metric'].lower()
+		if 'prefix' in config:
+			m = config['prefix'].lower()
 			if m == 'si':
-				self.metric = METRIC_SI
+				self.prefix = METRIC_SI
 			elif m == 'iec':
-				self.metric = METRIC_IEC
+				self.prefix = METRIC_IEC
 			else:
 				raise AssertionError("Unknown metrix prefix '%s'. Expecting 'si' or 'iec'")
 		if 'scale' in config:
@@ -217,13 +217,13 @@ class Metric(object):
 			u = self.units
 
 			# Apply prefix
-			if self.metric == METRIC_SI:
+			if self.prefix == METRIC_SI:
 				if v < 1:
 					(v, sf) = _apply_prefix( v, 0.001, [ 'm','u','n','p','f','a' ] )
 				else:
 					(v, sf) = _apply_prefix( v, 1000, [ 'k','M','G','T','P','E' ] )
 				u = sf + u
-			elif self.metric == METRIC_IEC:
+			elif self.prefix == METRIC_IEC:
 				(v, sf) = _apply_prefix( v, 1024, [ 'k','M','G','T','P','E' ] )
 				u = sf + u
 
