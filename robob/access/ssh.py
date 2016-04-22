@@ -16,6 +16,7 @@ class Pipe(PipeBase):
 		self.username = config['username']
 		self.args = []
 		self.password = None
+		self.host = None
 
 		# Prepare private key or password
 		if 'key' in config:
@@ -23,16 +24,25 @@ class Pipe(PipeBase):
 		elif 'password' in config:
 			self.password = config['password']
 
+		# Override host if defiend
+		if 'host' in config:
+			self.host = config['host']
+
 	def pipe_cmdline(self):
 		"""
 		Pipe local arguments to command-line
 		"""
 
+		# Get hostname
+		host = self.host
+		if host is None:
+			host = self.context["node.host"]
+
 		# Prepare args
 		args = [ "/usr/bin/ssh", "-t", "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no" ]
 		if self.password:
 			args += [ "-o", "PreferredAuthentications=password" ]
-		args += [ "%s@%s" % (self.username, self.context["node.host"]) ]
+		args += [ "%s@%s" % (self.username, host) ]
 		args += self.args
 		args += [ "--" ]
 
