@@ -9,7 +9,7 @@ class Parser(ParserBase):
 
 	  class: robob.parser.grid 
 	  separator: \s+				# How to split each line
-	  rewind: 						# Keyword were line index resets to 0
+	  anchor: 						# Keyword were line index resets to 0
 	  match:
 	    - name: sample1				# Match on exact line/column
 	      line: 1
@@ -39,10 +39,10 @@ class Parser(ParserBase):
 			self.colsep = re.compile(config['separator'])
 
 
-		# Rewind indicator
-		self.rewind = None
-		if 'rewind' in config:
-			self.rewind = re.compile(config['rewind'])
+		# anchor indicator
+		self.anchor = None
+		if 'anchor' in config:
+			self.anchor = re.compile(config['anchor'])
 
 		# Separate specified configuration to per-line
 		for cfg in config['match']:
@@ -81,8 +81,8 @@ class Parser(ParserBase):
 		Match the specified line against our configuration
 		"""
 
-		# Check for line rewind indicator
-		if self.rewind and self.rewind.match(line):
+		# Check for line anchor indicator
+		if self.anchor and self.anchor.match(line):
 			self.line = 0
 
 		# Process anyline config
@@ -118,7 +118,7 @@ class Parser(ParserBase):
 
 	def reset(self):
 		"""
-		When reset, rewind lines to line #0
+		When reset, anchor lines to line #0
 		"""
 		self.line = 0
 
