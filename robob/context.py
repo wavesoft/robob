@@ -2,10 +2,12 @@
 import re
 import copy
 
+from collections import OrderedDict
+
 #: Macro regex
 RE_MACRO = re.compile(r'\$\{([\w\.]+)\}')
 
-class Context(dict):
+class Context(OrderedDict):
 	"""
 	An environment variable and context
 	"""

@@ -1,6 +1,8 @@
 
 import logging
 import time
+
+from collections import OrderedDict
 from robob.factories import aggregateFactory
 
 logger = logging.getLogger("metrics")
@@ -314,7 +316,7 @@ class Metrics(object):
 		"""
 		Initialize metrics object
 		"""
-		self.metrics = {}
+		self.metrics = OrderedDict()
 
 	def configure(self, config):
 		"""

@@ -5,6 +5,8 @@ import itertools
 import datetime
 import logging
 
+from collections import OrderedDict
+
 from robob.util import time2sec
 from robob.reporter import Reporter
 from robob.metrics import Metrics
@@ -25,6 +27,17 @@ def deepupdate(original, update):
 			update[key] = value + update[key]
 	return update
 
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+	class OrderedLoader(Loader):
+		pass
+	def construct_mapping(loader, node):
+		loader.flatten_mapping(node)
+		return object_pairs_hook(loader.construct_pairs(node))
+	OrderedLoader.add_constructor(
+		yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+		construct_mapping)
+	return yaml.load(stream, OrderedLoader)
+
 class Specs(object):
 	"""
 	Specifications file with nested specifications resolution support
@@ -36,7 +49,7 @@ class Specs(object):
 		"""
 
 		self.filename = filename
-		self.specs = {}
+		self.specs = OrderedDict()
 
 	def getTestVariables(self):
 		"""
@@ -161,7 +174,7 @@ class Specs(object):
 			# Load specs
 			with open(fname, 'r') as f:
 				buf = f.read()
-				specs = yaml.load(buf)
+				specs = ordered_load(buf, yaml.SafeLoader)
 
 			# Check if there are other files to
 			# load, and therefore add them on filestack
