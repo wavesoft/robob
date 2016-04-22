@@ -92,7 +92,9 @@ class Specs(object):
 			ctx = self.context.fork()
 
 			# Update and collect
-			ctx.update( dict(zip( keys, v)) )
+			test_keys = dict(zip( keys, v))
+			ctx.update( test_keys ) # Insert in global scope
+			ctx.set( "curr", test_keys ) # And in curr scope
 			contexts.append( ctx )
 
 		return contexts
@@ -122,31 +124,11 @@ class Specs(object):
 		Create a reporter according to the specifications
 		"""
 
-		# Get report specifics
-		report = {}
-		if 'report' in self.specs:
-			report = self.specs['report']
-
-		# Get test name
-		name = "test"
-		if 'name' in self.specs:
-			name = self.specs['name']
-		if 'name' in report:
-			name = report['name']
-
-		# Get base dir
-		baseDir = "."
-		if os.path.isdir("./reports"):
-			baseDir = "./reports"
-		if 'path' in report:
-			baseDir = report['path']
-
-		# Calculate timestamp
-		d = datetime.datetime.now()
-		name += "-%s" % d.strftime("%Y%m%d%H%M%S")
-
 		# Calculate filename
-		filename = "%s/%s.csv" % (baseDir, name)
+		filename = self.context['report.path'] + "/"
+		filename += self.context['report.name']
+		filename += "-%s" % self.context['report.timestamp']
+		filename += ".csv"
 
 		# Create reporter
 		return Reporter( filename, self )
@@ -239,3 +221,23 @@ class Specs(object):
 		# Import notes
 		if 'notes' in self.specs:
 			self.context.set( 'notes', self.specs['notes'] )
+
+		# Import report
+		if 'report' in self.specs:
+			self.context.set("report", self.specs['report'])
+
+		# Initialize report defaults
+		if not 'report.name' in self.specs:
+			name = "test"
+			if 'name' in self.specs:
+				name = self.specs['name']
+			self.context.set('report.name', name)
+		if not 'report.path' in self.specs:
+			baseDir = "."
+			if os.path.isdir("./reports"):
+				baseDir = "./reports"
+			self.context.set('report.path', baseDir)
+
+		# Define report timestamp
+		d = datetime.datetime.now()
+		self.context.set( 'report.timestamp', d.strftime("%Y%m%d%H%M%S") )

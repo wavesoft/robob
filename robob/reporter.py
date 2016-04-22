@@ -1,6 +1,7 @@
 
 import datetime
 import logging
+from collections import OrderedDict
 
 class Reporter(object):
 	"""
@@ -36,13 +37,13 @@ class Reporter(object):
 		self.logger = logging.getLogger("report")
 
 		# Collect metadata
-		self.notes = {}
-		if 'notes' in specs.context:
-			self.notes.update( specs.context['notes'] )
+		self.notes = OrderedDict()
 		if 'title' in specs.specs:
 			self.notes['Title'] = specs.specs['title']
 		if 'desc' in specs.specs:
 			self.notes['Description'] = specs.specs['desc']
+		if 'notes' in specs.context:
+			self.notes.update( specs.context['notes'] )
 
 	def start( self ):
 		"""
@@ -126,12 +127,12 @@ class Reporter(object):
 
 		# Print values
 		rendered = results.render( True )
-		self.logger.info( "-" * (self.testTitleWidth + 12) )
+		self.logger.info( "-" * (self.testTitleWidth + 20) )
 		for i in range(0, len(self.testTitles)):
 			self.logger.info(
 				(("%%%is : ") % self.testTitleWidth) % self.testTitles[i] + rendered[i]
 			)
-		self.logger.info( "-" * (self.testTitleWidth + 12) )
+		self.logger.info( "-" * (self.testTitleWidth + 20) )
 
 	def test_start( self, testContext ):
 		"""

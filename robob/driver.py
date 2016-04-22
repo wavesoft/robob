@@ -233,8 +233,13 @@ class TestStreamThread(Thread):
 		# Send stdin if there are no expect entries
 		if (len(expect_out) == 0) and (len(expect_err) == 0):
 			self.logger.debug("Sending STDIN payload")
-			os.write( proc.fd, pipe.pipe_stdin() )
-			os.write( proc.fd, "\x04") # End-of-transmission
+			try:
+				os.write( proc.fd, pipe.pipe_stdin() )
+				os.write( proc.fd, "\x04") # End-of-transmission
+			except (OSError, IOError) as e:
+				self.logger.warn("%s occured: %s" % (e.__class__.__name__, str(e)))
+				self.interrupt("%s: %s" % (e.__class__.__name__, str(e)))
+				return
 			self.has_expect = False
 
 		# Flag that keeps line polling activ

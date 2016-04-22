@@ -6,6 +6,7 @@ from robob.factories import pipeFactory, parserFactory
 from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.metrics import Metrics
 from robob.pipe.app import Pipe as AppPipe
+from robob.logpipe import LogPipe
 
 def streamContext( context, specs ):
 	"""
@@ -88,6 +89,31 @@ class Stream(object):
 		# Update last stream ID
 		Stream.LAST_STREAM_ID += 1
 
+	def openLogPipe(self):
+		"""
+		Open a pipe to the filename that will hold the output of the application
+		"""
+
+		# If missing, return none
+		if not 'report.output' in self.context:
+			return None
+
+		# Calculate test values
+		testval = "+".join([ "%s-%s" % (k, str(v)) for k,v in self.context['curr'].iteritems() ])
+
+		# Calculate filename
+		filename = self.context['report.output'] + "/"
+		filename += self.context['report.name']
+		filename += "-%s" % self.context['report.timestamp']
+		filename += "-%s-%s" % (self.name, testval)
+		filename += ".log"
+
+		# Log
+		self.logger.info("Logging STDOUT to %s" % filename)
+
+		# Create and return a new logpipe
+		return LogPipe(filename)
+
 	def configure(self, specs):
 		"""
 		Configure stream from the specified specs context
@@ -128,18 +154,23 @@ class Stream(object):
 		self.bashPipe = BashWrapPipe( self.context )
 		self.bashPipe.plug( self.appPipe )
 
+		# Factory log pipe to capture output
+		out = self.openLogPipe()
+		if out:
+			self.appPipe.listen( out )
+
 		########################################
 		# Initialize parsers
 		########################################
 
-		# Locate parser names
+		# Instantiate app parsers
 		parser_names = []
-		if 'parser' in specs:
-			parser_names.append( specs['parser'] )
-		elif 'parsers' in specs:
-			parser_names += specs['parser']
+		if 'app.parser' in self.context:
+			parser_names.append( self.context['app.parser'] )
+		elif 'app.parsers' in self.context:
+			parser_names += self.context['app.parsers']
 		else:
-			raise AssertionError("It's required to define at least one parser on stream")
+			raise AssertionError("It's required to define at least one parser on app '%s'" % self.context['app.name'])
 
 		# Instantiate parsers
 		for n in parser_names:
