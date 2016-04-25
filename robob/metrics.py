@@ -119,6 +119,21 @@ class MetricValue(object):
 		self.t = time.time()
 		self.v = value
 
+	def number(self):
+		"""
+		Return value as number
+		"""
+		try:
+			if type(self.v) in [str, unicode]:
+				if '.' in self.v:
+					return float(self.v)
+				else:
+					return int(self.v)
+			else:
+				return self.v
+		except ValueError:
+			return 0.0
+
 class Metric(object):
 	"""
 	A single metric on the metrics array

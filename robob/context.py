@@ -5,7 +5,7 @@ import copy
 from collections import OrderedDict
 
 #: Macro regex
-RE_MACRO = re.compile(r'\$\{([\w\.]+)\}')
+RE_MACRO = re.compile(r'\$\{(.+?)\}')
 
 class Context(OrderedDict):
 	"""

@@ -133,17 +133,15 @@ class Pipe(PipeBase):
 		s_killtrap += "}\ntrap killer_@@ @@\n"
 
 		# Compile script
-		script = "# Prepare\n"
-		script += "stty -echo\n"
-		script += "# Definitions\n"
+		script = "# Definitions\n"
 		script += s_defs
 		script += "# Signal hooks\n"
 		script += s_killtrap.replace("@@", "SIGINT")
 		script += s_killtrap.replace("@@", "SIGHUP")
 		script += s_killtrap.replace("@@", "SIGKILL")
 		script += "# Run script\n"
+		script += "echo ::I::Starting application\n"
 		script += s_run
-		script += "echo ::I::Application started\n"
 		script += "# Wait for first fragment complete\n"
 		script += "wait $FRAG_PID_0\n"
 		script += "RET=$?\n"

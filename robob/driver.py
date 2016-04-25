@@ -42,22 +42,9 @@ class PtyProcess:
 		"""
 
 		# Disable echo in the tty
-		old = termios.tcgetattr(self.fd)
 		new = termios.tcgetattr(self.fd)
 		new[3] = new[3] & ~termios.ECHO
 		termios.tcsetattr(self.fd, termios.TCSADRAIN, new)
-
-		# Create an FD for reading
-		fd_read = os.dup(self.fd)
-		fcntl.fcntl(fd_read, fcntl.F_SETFL, os.O_RDONLY)
-
-		# Create an FD for writing
-		fd_write = os.dup(self.fd)
-		fcntl.fcntl(fd_write, fcntl.F_SETFL, os.O_WRONLY)
-
-		# Wrap file descriptors in file objects
-		self.stdin = os.fdopen( fd_write, 'wb', 0 )
-		self.stdout = os.fdopen( fd_read, 'rb', 0 )
 
 	def close(self):
 		"""
@@ -67,8 +54,6 @@ class PtyProcess:
 		if self.fd:
 			if self.returncode != None:
 				os.close(self.fd)
-				self.stdin.close()
-				self.stdout.close()
 			self.fd = None
 
 	def send_signal(self, sig):
@@ -252,6 +237,9 @@ class TestStreamThread(Thread):
 			if not read.strip():
 				return
 
+			# Ignore '\r'
+			read = read.replace("\r", "")
+
 			# Guard against exceptions
 			self.logger.debug("STDIN: %s" % read)
 			try:
@@ -309,11 +297,21 @@ class TestStreamThread(Thread):
 
 			# Wait for data within 100ms
 			if proc.fd in select.select([proc.fd], [], [], 0.1)[0]:
+
+				# If interrupted, quit
+				if self.interrupted:
+					pipe.pipe_close()
+					return
+
+				# Read data
 				buf = os.read( proc.fd, 4096)
 				if buf:
 
-					# Process lines
+					# Stack buffers
 					data += buf
+
+					# Replace windows newlines & process lines
+					data = data.replace("\r\n", "\n")
 					while "\n" in data:
 						(line, data) = data.split("\n",1)
 						handle_line(line)
@@ -332,6 +330,7 @@ class TestStreamThread(Thread):
 			if t_expire and (time.time() > t_expire):
 				self.logger.critical("Timeout of %s seconds expired" % self.stream.timeout)
 				self.interrupt("Timeout after %s sec" % self.stream.timeout)
+				pipe.pipe_close()
 				return
 
 		# If not interrupted, clean shutdown
@@ -429,10 +428,13 @@ class TestDriver:
 		# Update exit code status
 		for t in self.threads:
 			if t.returncode != 0:
-				self.lastStatus = "Error"
 				if self.lastComment:
 					self.lastComment += "; "
 				self.lastComment += "%s returned=%i" % (t.stream.name, t.returncode)
+
+				# Switch to error only if not completed (it might be timeout for example)
+				if self.lastStatus == "Completed":
+					self.lastStatus = "Error"
 
 		# Reap threads
 		for t in self.threads:

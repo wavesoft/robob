@@ -22,12 +22,12 @@ class Aggregate(MetricAggregator):
 		# Summarize
 		num = 0
 		for v in values:
-			num += v.v
+			num += v.number()
 
 		# Return average suffix
 		if len(values) == 0:
 			return [ 0 ]
-		return [ num / len(values) ]
+		return [ float(num) / len(values) ]
 
 	def titles(self):
 		"""

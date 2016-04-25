@@ -22,7 +22,7 @@ class Aggregate(MetricAggregator):
 		# Summarize
 		num = 0
 		for v in values:
-			num += v.v
+			num += v.number()
 
 		# Return sum
 		return [ num ]

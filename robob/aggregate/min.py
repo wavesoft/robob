@@ -24,8 +24,9 @@ class Aggregate(MetricAggregator):
 		if len(values) > 0:
 			num = values[0].v
 			for v in values:
-				if v.v < num:
-					num = v.v
+				n = n.number()
+				if n < num:
+					num = n
 
 		# Return minimum
 		return [ num ]
