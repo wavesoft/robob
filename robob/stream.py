@@ -1,4 +1,5 @@
 
+import re
 import logging
 
 from robob.util import time2sec
@@ -59,6 +60,14 @@ def streamContext( context, specs ):
 	# Render and return context
 	return context.render()
 
+RE_SANITIZE = re.compile(r"[^A-Za-z0-9]+")
+
+def sanitize_fname(v):
+	"""
+	Sanitize fileame
+	"""
+	return RE_SANITIZE.sub("-", str(v))
+
 class Stream(object):
 	"""
 	A stram on which tests can run
@@ -98,8 +107,8 @@ class Stream(object):
 		if not 'report.keep_output' in self.context:
 			return None
 
-		# Calculate test values
-		testval = "+".join([ "%s-%s" % (k, str(v)) for k,v in self.context['curr'].iteritems() ])
+		# Calculate test values (with sane filename)
+		testval = "+".join([ "%s-%s" % (k, sanitize_fname(v)) for k,v in self.context['curr'].iteritems() ])
 
 		# Calculate filename
 		filename = self.context['report.keep_output'] + "/"
