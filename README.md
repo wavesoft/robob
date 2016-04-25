@@ -8,6 +8,8 @@ Do you have to run some benchmarks? Do you need to run some tasks over night and
 
 It uses a powerful, extensible, human-readable YAML ruleset for defining your specifications.
 
+You can learn more on the [Wiki Page](https://github.com/wavesoft/robob/wiki)!
+
 ## Installing
 
 Robob has a few requirements. To install them you can use pip:

@@ -76,7 +76,7 @@ for test in tests:
 		reporter.iteration_start( i+1 )
 
 		# Run driver
-		driver.run()
+		driver.run(i)
 		reporter.iteration_end( driver.lastResults, driver.lastStatus, driver.lastComment )
 
 		# Apply cooldown

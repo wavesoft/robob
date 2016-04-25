@@ -1,4 +1,5 @@
 
+import os
 import re
 import logging
 
@@ -76,7 +77,7 @@ class Stream(object):
 	# Last stream ID
 	LAST_STREAM_ID = 0
 
-	def __init__(self, context, metrics):
+	def __init__(self, context, metrics, iteration):
 		"""
 		Initialize a new stream
 		"""
@@ -90,7 +91,9 @@ class Stream(object):
 		self.metrics = metrics
 		self.context = context
 		self.timeout = None
+		self.idletimeout = None
 		self.active = True
+		self.iteration = iteration
 
 		# Open logger
 		self.logger = logging.getLogger("stream.%s" % self.name)
@@ -107,17 +110,24 @@ class Stream(object):
 		if not 'report.keep_output' in self.context:
 			return None
 
-		# Calculate test values (with sane filename)
-		testval = "+".join([ "%s-%s" % (k, sanitize_fname(v)) for k,v in self.context['curr'].iteritems() ])
-
 		# Calculate filename
-		filename = self.context['report.keep_output'] + "/"
-		filename += self.context['report.name']
-		filename += "-%s" % self.context['report.timestamp']
-		filename += "-%s-%s" % (self.name, testval)
+		testval = "+".join([ "%s-%s" % (k, sanitize_fname(v)) for k,v in self.context['curr'].iteritems() ])
+		filename = "out-%s-%s-%i" % (self.name, testval, self.iteration+1)
 		filename += ".log"
 
+		# Calculate directory name
+		basedir = self.context['report.keep_output'] + "/"
+		basedir += self.context['report.name']
+		basedir += "-%s" % self.context['report.timestamp']
+
+		# Make directory
+		if not os.path.exists(basedir):
+			os.mkdir(basedir)
+		elif not os.path.isdir(basedir):
+			raise AssertionError("Directory %s is not directory!" % basedir)
+
 		# Log
+		filename = "%s/%s" % (basedir, filename)
 		self.logger.info("Logging STDOUT to %s" % filename)
 
 		# Create and return a new logpipe
@@ -134,6 +144,8 @@ class Stream(object):
 			self.delay = time2sec(specs['delay'])
 		if 'timeout' in specs:
 			self.timeout = time2sec(specs['timeout'])
+		if 'idle' in specs:
+			self.idletimeout = time2sec(specs['idle'])
 		if 'name' in specs:
 			self.name = specs['name']
 			self.logger = logging.getLogger("stream.%s" % self.name)

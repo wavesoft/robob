@@ -140,6 +140,7 @@ class TestStreamThread(Thread):
 		self.interrupted = False
 		self.interruptReason = ""
 		self.logger = logging.getLogger("stream.%s" % self.stream.name)
+		self.lastactivity = time.time()
 
 	def interrupt(self, reason="User interrupt", timeout=5):
 		"""
@@ -233,6 +234,9 @@ class TestStreamThread(Thread):
 		# Helper function to handle lines
 		def handle_line(read):
 
+			# Consider this an "activity" action
+			self.lastactivity = time.time()
+
 			# Skip empty lines
 			if not read.strip():
 				return
@@ -284,6 +288,7 @@ class TestStreamThread(Thread):
 		data = ""
 		data_flush_t = 0
 		while active:
+			ts = time.time()
 
 			# If interrupted, quit
 			if self.interrupted:
@@ -291,7 +296,7 @@ class TestStreamThread(Thread):
 				return
 
 			# Forward incomplete data as incomplete line
-			if data and (time.time() > data_flush_t):
+			if data and (ts > data_flush_t):
 				handle_line(data)
 				data = ""
 
@@ -319,7 +324,7 @@ class TestStreamThread(Thread):
 					# Note when we received the data
 					# in order to forward them as-is as
 					# incomplete line data after a timeout
-					data_flush_t = time.time() + 0.1
+					data_flush_t = ts + 0.1
 
 			# Check for process exit
 			if proc.poll() != None:
@@ -327,10 +332,16 @@ class TestStreamThread(Thread):
 				break
 
 			# Check if timeout expired
-			if t_expire and (time.time() > t_expire):
+			if t_expire and (ts > t_expire):
 				self.logger.critical("Timeout of %s seconds expired" % self.stream.timeout)
 				self.interrupt("Timeout after %s sec" % self.stream.timeout)
 				pipe.pipe_close()
+				return
+
+			# Check if idle timeout expired
+			if self.stream.idletimeout and (ts > (self.lastactivity + self.stream.idletimeout)):
+				self.logger.critical("Timeout after %s seconds of inactivity" % self.stream.idletimeout)
+				self.interrupt("Timeout after %s seconds of inactivity" % self.stream.idletimeout)
 				return
 
 		# If not interrupted, clean shutdown
@@ -370,13 +381,13 @@ class TestDriver:
 		self.lastStatus = ""
 		self.lastComment = ""
 
-	def run(self):
+	def run(self, iteration):
 		"""
 		Start the tests on the test driver
 		"""
 
 		# Create all stream specifications on this context
-		streams = self.specs.createStreams( self.test, self.metrics )
+		streams = self.specs.createStreams( self.test, self.metrics, iteration )
 
 		# Reset metrics
 		self.metrics.reset()

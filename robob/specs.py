@@ -99,7 +99,7 @@ class Specs(object):
 
 		return contexts
 
-	def createStreams(self, testContext, testMetrics):
+	def createStreams(self, testContext, testMetrics, iteration):
 		"""
 		Create a stream contexts using the specified test context as base
 		"""
@@ -110,7 +110,7 @@ class Specs(object):
 		for specs in self.specs['streams']:
 
 			# Create and configure a stream
-			stream = Stream( testContext, testMetrics )
+			stream = Stream( testContext, testMetrics, iteration )
 			stream.configure( specs )
 
 			# Append to list
