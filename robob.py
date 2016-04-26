@@ -76,7 +76,7 @@ for test in tests:
 
 		# Start log
 		logger.info("Running %i/%i (test: %i/%i, iteration: %i/%i, values: {%s})" % (p_curr+1, p_total, test_id+1, len(tests), i+1, iterations, \
-			", ".join([ "%s=%s" % (k, str(v)) for k,v in test['curr'].iteritems() ]) ))
+			", ".join([ "%s=\"%s\"" % (k, str(v)) for k,v in test['curr'].iteritems() ]) ))
 		reporter.iteration_start( i+1 )
 
 		# Run driver

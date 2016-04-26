@@ -1,14 +1,4 @@
 
-
-#
-# The 'free' streamlet exposes the following new metrics
-#
-metrics:
-
-  - name: load
-    title: CPU Load
-    units: "%"
-
 #
 # It also uses a custom parser
 # 
@@ -17,7 +7,7 @@ parsers:
   - name: uptime_load
     class: robob.parser.regex  
     match:
-      - "^.*?load average: (?P<load>[0-9\\.]+).*"
+      - "^.*?load average: (?P<uptime_load>[0-9\\.]+).*"
 
 streamlets:
 
