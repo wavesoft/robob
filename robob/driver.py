@@ -392,6 +392,7 @@ class TestDriver:
 		# Reset metrics
 		self.metrics.reset()
 		self.lastStatus = "Completed"
+		self.lastComment = ""
 
 		# Launch them
 		self.threads = []

@@ -70,8 +70,12 @@ for test in tests:
 	# Run multiple iterations of the test
 	for i in range( 0, iterations ):
 
+		# Calculate progress
+		p_total = (len(tests) * iterations)
+		p_curr = test_id * iterations + i
+
 		# Start log
-		logger.info("Running test %i/%i (iteration %i/%i) (%s)" % (test_id+1, len(tests), i+1, iterations, \
+		logger.info("Running %i/%i (test: %i/%i, iteration: %i/%i, values: {%s})" % (p_curr+1, p_total, test_id+1, len(tests), i+1, iterations, \
 			", ".join([ "%s=%s" % (k, str(v)) for k,v in test['curr'].iteritems() ]) ))
 		reporter.iteration_start( i+1 )
 
