@@ -128,7 +128,7 @@ class Context(OrderedDict):
 
 		# Check if this is an expression
 		if ('*' in expr) or ('+' in expr) or ('/' in expr) or \
-			('-' in expr) or ('^' in expr):
+			('-' in expr) or ('^' in expr) or ('(' in expr) or (')' in expr):
 
 			# Replace helper
 			def replace(m):
