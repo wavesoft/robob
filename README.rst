@@ -34,7 +34,7 @@ To launch a benchmark you only need to specify the path to the specifications fi
 Example
 ^^^^^^^
 
-The following specification file from the [Simple Example](https://github.com/wavesoft/robob/wiki/Simple-Example) demonstrates how to use roBob to run iperf between two machines for different window sizes:
+The following specification file from the Simple Example (https://github.com/wavesoft/robob/wiki/Simple-Example) demonstrates how to use roBob to run iperf between two machines for different window sizes:
 
 .. code-block:: yaml
 
