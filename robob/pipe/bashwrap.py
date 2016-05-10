@@ -64,6 +64,7 @@ class Pipe(PipeBase):
 		# Init properties
 		self.script_blocks = []
 		self.pipes_pre = []
+		self.pipes_post = []
 		self.logger = logging.getLogger("pipe.bashwrap")
 
 	def plug_pre(self, pipe):
@@ -71,6 +72,12 @@ class Pipe(PipeBase):
 		Plug a pipe in the beginning of the script
 		"""
 		self.pipes_pre.append( pipe )
+
+	def plug_post(self, pipe):
+		"""
+		Plug a pipe in the end of the script
+		"""
+		self.pipes_post.append( pipe )
 
 	def pipe_cmdline(self):
 		"""
@@ -89,6 +96,7 @@ class Pipe(PipeBase):
 		s_defs = ""
 		s_run = ""
 		s_pre = ""
+		s_post = ""
 		s_killtrap = "function killer_@@ {\n"
 
 		# Render pre-pipes
@@ -101,9 +109,33 @@ class Pipe(PipeBase):
 			else:
 				frag_script = list2cmdline(cmdline)
 
+			# Add semi-colon at the end of the fragment if we don't already
+			# have a command terminator
+			if not frag_script[-1] in ["\n", ";"]:
+				frag_script += ";"
+
 			# Include fragment in preconditions
 			s_pre += "{ %s } >/dev/null 2>/dev/null\n" % frag_script
-			s_pre += "[ $? -ne 0 ] && echo \"::I::A pre-condition failed\"\n"
+			s_pre += "[ $? -ne 0 ] && echo \"::W::A pre-condition failed\"\n"
+
+		# Render post-pipes
+		for p in self.pipes_post:
+
+			# Get fragment script
+			cmdline = p.pipe_cmdline()
+			if cmdline[0] == "eval":
+				frag_script = " ".join(cmdline[1:])
+			else:
+				frag_script = list2cmdline(cmdline)
+
+			# Add semi-colon at the end of the fragment if we don't already
+			# have a command terminator
+			if not frag_script[-1] in ["\n", ";"]:
+				frag_script += ";"
+
+			# Include fragment in postconditions
+			s_post += "{ %s } >/dev/null 2>/dev/null\n" % frag_script
+			s_post += "[ $? -ne 0 ] && echo \"::W::A post-condition failed\"\n"
 
 		# Prepare pipe chunks
 		for i in range(0, len(self.pipes)):
@@ -163,8 +195,15 @@ class Pipe(PipeBase):
 		script += s_killtrap.replace("@@", "SIGKILL")
 		if s_pre:
 			script += "# Pre-conditions\n"
-			script += "echo ::I::Satisfying pre-conditions\n"
+			script += "echo ::D::Satisfying pre-conditions\n"
 			script += s_pre
+		if s_post:
+			script += "# Post-conditions\n"
+			script += "function exit_handler {\n"
+			script += "echo ::D::Satisfying post-conditions\n"
+			script += s_post
+			script += "}\n"
+			script += "trap exit_handler EXIT\n"
 		script += "# Run script\n"
 		script += "echo ::I::Starting application\n"
 		script += s_run
@@ -176,7 +215,7 @@ class Pipe(PipeBase):
 		script += "killer_SIGINT\n"
 		script += "exit $RET\n"
 
-		sys.stdout.write("----BEGIN SCRIPT----\n%s\n----END SCRIPT----" % script)
+		# sys.stdout.write("----BEGIN SCRIPT----\n%s\n----END SCRIPT----" % script)
 
 		# Return script
 		return script
@@ -204,6 +243,9 @@ class Pipe(PipeBase):
 
 		# Extract line code
 		lc = stdout[2:end]
+		if lc == "D":
+			self.logger.debug(stdout[end+2:])
+			return
 		if lc == "I":
 			self.logger.info(stdout[end+2:])
 			return

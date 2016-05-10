@@ -11,7 +11,8 @@ from robob.metrics import Metrics
 from robob.logpipe import LogPipe
 from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.pipe.app import Pipe as AppPipe
-from robob.pipe.filegen import Pipe as FilegenPipe
+from robob.pipe.filegen import Pipe as FileGenPipe
+from robob.pipe.filedel import Pipe as FileDelPipe
 
 def streamContext( context, specs ):
 	"""
@@ -64,6 +65,8 @@ def streamContext( context, specs ):
 	# Update app file paths if temporary
 	if 'app.files' in context:
 		for f in context['app.files']:
+
+			# Create filename of temporary file
 			if not 'path' in f:
 
 				# Calcuate suffix
@@ -80,7 +83,15 @@ def streamContext( context, specs ):
 
 				# Update context
 				f['path'] = tmp_path
+				f['temp'] = True
 				context.set("app.files.%s.path" % f['name'], tmp_path)
+				context.set('app.files.%s.temp' % f['name'], True)
+
+			else:
+
+				# Mark as non-temporary
+				f['temp'] = False
+				context.set('app.files.%s.temp' % f['name'], False)
 
 	# Render and return context
 	return context.render()
@@ -213,11 +224,21 @@ class Stream(object):
 			for filegen in self.context['app.files']:
 
 				# Instantiate and configure filegen pipe
-				fpipe = FilegenPipe( self.context )
+				fpipe = FileGenPipe( self.context )
 				fpipe.configure( filegen )
 
 				# Add precondition to bash pipe
 				self.bashPipe.plug_pre( fpipe )
+
+				# If this is temporary, add cleanup pipe
+				if filegen['temp']:
+
+					# Instantiate and configure file delete pipe
+					dpipe = FileDelPipe( self.context )
+					dpipe.configure( fpipe.path )
+
+					# Add post-condition to bash pipe
+					self.bashPipe.plug_post( dpipe )
 
 		########################################
 		# Initialize parsers

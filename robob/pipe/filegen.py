@@ -24,7 +24,8 @@ class Pipe(PipeBase):
 		"""
 
 		# A unique contents separator
-		eof_indicator = "_FCONTENTS_EOF_"
+		eof_indicator = "CONTENTS_"
+		eof_indicator += ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
 
 		# Prepare script
 		genscript  = "WFILE=\"%s\"\n" % self.path

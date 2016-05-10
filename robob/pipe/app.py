@@ -15,6 +15,7 @@ class Pipe(PipeBase):
 		# Prepare
 		self.binary = config['binary']
 		self.args = []
+		self.stdin = None
 
 		# Parse arguments
 		if 'args' in config:
@@ -25,6 +26,10 @@ class Pipe(PipeBase):
 			else:
 				raise AssertionError("Application's arguments must be a string or list!")
 
+		# Process stdin
+		if 'stdin' in config:
+			self.stdin = config['stdin']
+
 		# Parse application environment
 		self.env = {}
 		if 'env' in config:
@@ -32,6 +37,12 @@ class Pipe(PipeBase):
 			if not n in self.context:
 				raise AssertionError("Unknown environment '%s' in application specs" % config['env'])
 			self.env = self.context[ n ]
+
+	def pipe_stdin(self):
+		"""
+		Return app stdin buffer (if any)
+		"""
+		return self.stdin
 
 	def pipe_cmdline(self):
 		"""
