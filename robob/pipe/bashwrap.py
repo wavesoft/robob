@@ -63,7 +63,14 @@ class Pipe(PipeBase):
 
 		# Init properties
 		self.script_blocks = []
+		self.pipes_pre = []
 		self.logger = logging.getLogger("pipe.bashwrap")
+
+	def plug_pre(self, pipe):
+		"""
+		Plug a pipe in the beginning of the script
+		"""
+		self.pipes_pre.append( pipe )
 
 	def pipe_cmdline(self):
 		"""
@@ -81,7 +88,22 @@ class Pipe(PipeBase):
 		# Definitions
 		s_defs = ""
 		s_run = ""
+		s_pre = ""
 		s_killtrap = "function killer_@@ {\n"
+
+		# Render pre-pipes
+		for p in self.pipes_pre:
+
+			# Get fragment script
+			cmdline = p.pipe_cmdline()
+			if cmdline[0] == "eval":
+				frag_script = " ".join(cmdline[1:])
+			else:
+				frag_script = list2cmdline(cmdline)
+
+			# Include fragment in preconditions
+			s_pre += "{ %s } >/dev/null 2>/dev/null\n" % frag_script
+			s_pre += "[ $? -ne 0 ] && echo \"::I::A pre-condition failed\"\n"
 
 		# Prepare pipe chunks
 		for i in range(0, len(self.pipes)):
@@ -139,6 +161,10 @@ class Pipe(PipeBase):
 		script += s_killtrap.replace("@@", "SIGINT")
 		script += s_killtrap.replace("@@", "SIGHUP")
 		script += s_killtrap.replace("@@", "SIGKILL")
+		if s_pre:
+			script += "# Pre-conditions\n"
+			script += "echo ::I::Satisfying pre-conditions\n"
+			script += s_pre
 		script += "# Run script\n"
 		script += "echo ::I::Starting application\n"
 		script += s_run
@@ -150,7 +176,7 @@ class Pipe(PipeBase):
 		script += "killer_SIGINT\n"
 		script += "exit $RET\n"
 
-		# sys.stdout.write("----BEGIN SCRIPT----\n%s\n----END SCRIPT----" % script)
+		sys.stdout.write("----BEGIN SCRIPT----\n%s\n----END SCRIPT----" % script)
 
 		# Return script
 		return script

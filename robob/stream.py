@@ -2,13 +2,16 @@
 import os
 import re
 import logging
+import random
+import string
 
 from robob.util import time2sec
 from robob.factories import pipeFactory, parserFactory
-from robob.pipe.bashwrap import Pipe as BashWrapPipe
 from robob.metrics import Metrics
-from robob.pipe.app import Pipe as AppPipe
 from robob.logpipe import LogPipe
+from robob.pipe.bashwrap import Pipe as BashWrapPipe
+from robob.pipe.app import Pipe as AppPipe
+from robob.pipe.filegen import Pipe as FilegenPipe
 
 def streamContext( context, specs ):
 	"""
@@ -57,6 +60,27 @@ def streamContext( context, specs ):
 		context.update( app['define'] )
 	if 'define' in specs:
 		context.update( specs['define'] )
+
+	# Update app file paths if temporary
+	if 'app.files' in context:
+		for f in context['app.files']:
+			if not 'path' in f:
+
+				# Calcuate suffix
+				suffix = ".tmp"
+				if 'suffix' in f:
+					suffix = f['suffix']
+
+				# Calculate temporary path
+				tmp_path = "/tmp/robob.%s-%s%s" % (
+						f['name'],
+						''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24)),
+						suffix
+					)
+
+				# Update context
+				f['path'] = tmp_path
+				context.set("app.files.%s.path" % f['name'], tmp_path)
 
 	# Render and return context
 	return context.render()
@@ -179,6 +203,21 @@ class Stream(object):
 		out = self.openLogPipe()
 		if out:
 			self.appPipe.listen( out )
+
+		########################################
+		# Initialize file generators
+		########################################
+
+		# Instantiate file generators
+		if 'app.files' in self.context:
+			for filegen in self.context['app.files']:
+
+				# Instantiate and configure filegen pipe
+				fpipe = FilegenPipe( self.context )
+				fpipe.configure( filegen )
+
+				# Add precondition to bash pipe
+				self.bashPipe.plug_pre( fpipe )
 
 		########################################
 		# Initialize parsers
