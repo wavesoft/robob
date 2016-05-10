@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import signal
 import logging
@@ -8,25 +9,41 @@ from robob.util import time2sec
 from robob.specs import Specs
 from robob.driver import TestDriver
 
-def help():
+def help(verbose=False):
 	"""
 	Show help screen
 	"""
-	print("Use: run.sh <path-to-benchmark>")
+	print("RoBOB - Simplify collection of measurements over repetitive tasks")
+	print("Read more: https://github.com/wavesoft/robob/wiki")
+	print("")
+	print("Usage: robob <path-to-benchmark.yaml>")
+	print("")
 	sys.exit(1)
 
 def main():
 
-	# Show help screen if missing arguments
-	if len(sys.argv) < 2:
-		help()
-		return
-
 	# Get a logger
 	logger = logging.getLogger("robob")
 
+	# Show help screen if missing arguments
+	if len(sys.argv) < 2:
+		help()
+		return 2
+
+	# Check for help
+	if sys.argv[1] in ['-h', '--help']:
+		help(True)
+		return 0
+
+	# Validate file
+	specsfile = sys.argv[1]
+	if not os.path.isfile(specsfile):
+		logger.error("The specified file '%s' was not found!" % specsfile)
+		help()
+		return 1
+
 	# Load specs
-	specs = Specs( sys.argv[1] )
+	specs = Specs( specsfile )
 	specs.load()
 
 	# Create test contexts
@@ -98,3 +115,4 @@ def main():
 	# Finalize reporter
 	reporter.finalize()
 	reporter.close()
+	return 0

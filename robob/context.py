@@ -8,6 +8,9 @@ from collections import OrderedDict
 #: Macro regex
 RE_MACRO = re.compile(r'\$\{(.+?)\}')
 
+#: Macro variable regex
+RE_MACRO_VAR = re.compile(r'[a-z][a-z0-9\._]*', flags=re.IGNORECASE)
+
 #: Context logger
 logger = logging.getLogger('context')
 
@@ -110,6 +113,66 @@ class Context(OrderedDict):
 		# Return a new context with the new dictionary
 		return Context( dictionary )
 
+	def evaluate(self, expr):
+		"""
+		Evaluate a macro expression
+		"""
+
+		# Reset properties
+		self._evalMissing = False
+
+		# Extract default value
+		defaultValue = None
+		if '|' in expr:
+			(expr, defaultValue) = expr.split("|", 1)
+
+		# Check if this is an expression
+		if ('*' in expr) or ('+' in expr) or ('/' in expr) or \
+			('-' in expr) or ('^' in expr):
+
+			# Replace helper
+			def replace(m):
+				key = m.group(0)
+
+				# Ignore some functions
+				if key in ['str', 'int', 'float']:
+					return m.group(0)
+
+				# Replace values
+				if not key in self:
+					self._evalMissing = True
+					return ""
+				else:
+
+					# Check if we should wrap value in quotes
+					value = str(self[key])
+					if value.isdigit() or ((value.count(".") == 1) and value.replace(".","").isdigit()):
+						return value
+					else:
+						return '"%s"' % value.replace('"', '\\"')
+
+			# Expand variables
+			eval_expr = RE_MACRO_VAR.sub( replace, expr )
+
+			# Check if we had missing properties
+			if self._evalMissing:
+				return defaultValue
+
+			# Otherwise evaluate expression
+			try:
+				return eval(eval_expr)
+			except Exception as e:
+				logger.warn("Error evaluating macro expression '%s': %s" % (expr, str(e)))
+				return defaultValue
+
+		else:
+
+			# It's a plain value, return calculation
+			if expr in self:
+				return self[expr]
+			else:
+				return defaultValue
+
 	def replaceMacros(self, where, _firstCall=True):
 		"""
 		Replace all macros in context to the given string
@@ -122,18 +185,20 @@ class Context(OrderedDict):
 
 		# Replace helper
 		def replace(m):
+			# Try to evaluate expression
 			key = m.group(1)
-			if key in self:
+			value = self.evaluate( key )
+			if value is None:
+				# Return un-replaced
+				self._unreplaced.add(key)
+				return m.group(0)
+			else:
 				# Return replaced & mark action
 				self._did_replace = True
 				# Remove from unreplaced
 				if key in self._unreplaced:
 					self._unreplaced.remove(key)
-				return str(self[key])
-			else:
-				# Return un-replaced
-				self._unreplaced.add(key)
-				return m.group(0)
+				return str(value)
 
 		# Replace all macros in dict
 		if isinstance(where, dict):
