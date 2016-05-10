@@ -124,7 +124,7 @@ class MetricValue(object):
 		Return value as number
 		"""
 		try:
-			if type(self.v) in [str, unicode]:
+			if type(self.v) in [str, str]:
 				if '.' in self.v:
 					return float(self.v)
 				else:
@@ -180,12 +180,12 @@ class Metric(object):
 			self.decimals = int(config['dec'])
 		if 'aggregate' in config:
 			aggregate = config['aggregate']
-			if type(aggregate) in [str, unicode]:
+			if type(aggregate) in [str, str]:
 				aggregate = [ {"class": aggregate} ]
 			if type(aggregate) is dict:
 				aggregate = [ aggregate ]
 			for a in aggregate:
-				if type(a) in [str, unicode]:
+				if type(a) in [str, str]:
 					a = {"class": a}
 				self.aggregators.append( aggregateFactory(a, self) )
 
@@ -310,7 +310,7 @@ class MetricsResults(object):
 		"""
 
 		# Get aggregated values
-		values = metric.values()
+		values = list(metric.values())
 
 		# Update value and linked metric for it
 		for v in values:
@@ -355,7 +355,7 @@ class Metrics(object):
 		"""
 		Reset all metrics
 		"""
-		for m in self.metrics.values():
+		for m in list(self.metrics.values()):
 			m.reset()
 
 	def update(self, name, value):
@@ -377,7 +377,7 @@ class Metrics(object):
 		titles = []
 
 		# Get the aggregator titles of each metric
-		for m in self.metrics.values():
+		for m in list(self.metrics.values()):
 			titles += m.titles()
 
 		# Return titles
@@ -392,7 +392,7 @@ class Metrics(object):
 		results = MetricsResults()
 
 		# Start aggregating results
-		for m in self.metrics.values():
+		for m in list(self.metrics.values()):
 			results.updateFrom( m )
 
 		# Return resultset

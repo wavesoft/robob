@@ -37,6 +37,6 @@ class Parser(ParserBase):
 			if grp:
 
 				# Update values
-				for k,v in grp.groupdict().iteritems():
+				for k,v in grp.groupdict().items():
 					self.update( k, float(v) )
 

@@ -35,7 +35,7 @@ class Context(OrderedDict):
 		if include_flag:
 	
 			if isinstance(value, dict):
-				for k,v in value.iteritems():
+				for k,v in value.items():
 					self.set( "%s.%s" % (name,k), v )
 
 			elif isinstance(value, list):
@@ -80,7 +80,7 @@ class Context(OrderedDict):
 
 				# Update flat representation
 				if include_flag:
-					for k,v in value.iteritems():
+					for k,v in value.items():
 						self.set( "%s.%s" % (name,k), v )
 
 				# Don't continue
@@ -138,7 +138,7 @@ class Context(OrderedDict):
 		# Replace all macros in dict
 		if isinstance(where, dict):
 			ans = {}
-			for k,v in where.iteritems():
+			for k,v in where.items():
 				(ans[k], unused) = self.replaceMacros(v, False)
 			return (ans, self._did_replace)
 
@@ -150,7 +150,7 @@ class Context(OrderedDict):
 			return (ans, self._did_replace)
 
 		# Replace all macros in string
-		elif type(where) in [str, unicode]:
+		elif type(where) in [str, str]:
 			return (RE_MACRO.sub( replace, where ), self._did_replace)
 
 		# Pass through everything else

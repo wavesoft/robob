@@ -14,7 +14,7 @@ def help():
 	"""
 	Show help screen
 	"""
-	print "Use: run.sh <path-to-benchmark>"
+	print("Use: run.sh <path-to-benchmark>")
 	sys.exit(1)
 
 # Show help screen if missing arguments

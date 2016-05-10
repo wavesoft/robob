@@ -146,7 +146,7 @@ class Stream(object):
 			return None
 
 		# Calculate filename
-		testval = "+".join([ "%s-%s" % (k, sanitize_fname(v)) for k,v in self.context['curr'].iteritems() ])
+		testval = "+".join([ "%s-%s" % (k, sanitize_fname(v)) for k,v in self.context['curr'].items() ])
 		filename = "out-%s-%s-%i" % (self.name, testval, self.iteration+1)
 		filename += ".log"
 
@@ -191,7 +191,7 @@ class Stream(object):
 		# Check if stream is active
 		if 'stream.active' in self.context:
 			self.active = self.context['stream.active']
-			if type(self.active) in [str, unicode]:
+			if type(self.active) in [str, str]:
 				self.active = self.active.lower() in [ "1", "yes", "true", "on" ]
 
 		# If not active exit
@@ -278,7 +278,7 @@ class Stream(object):
 			for slt in specs['streamlets']:
 
 				# Expand string shorthand
-				if type(slt) in [str, unicode]:
+				if type(slt) in [str, str]:
 					slt = { "streamlet": slt }
 
 				# Get name

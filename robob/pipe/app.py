@@ -19,7 +19,7 @@ class Pipe(PipeBase):
 
 		# Parse arguments
 		if 'args' in config:
-			if type(config['args']) in [str, unicode]:
+			if type(config['args']) in [str, str]:
 				self.args = shlex.split(config['args'])
 			elif isinstance(config['args'], list):
 				self.args = config['args']
@@ -59,7 +59,7 @@ class Pipe(PipeBase):
 		# If we have environment wrap in 'env'
 		if self.env:
 			env_prefix = [ 'env' ]
-			for k,v in self.env.iteritems():
+			for k,v in self.env.items():
 				env_prefix.append( "%s=%s" % (k,v) )
 
 			# Update with prefix

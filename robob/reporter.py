@@ -60,7 +60,7 @@ class Reporter(object):
 		self.fd = open(self.filename, "w")
 
 		# Write title & Columns
-		for k,v in self.notes.iteritems():
+		for k,v in self.notes.items():
 			self.fd.write("%s,%s\n" % (k, v))
 		self.fd.write("Started on,%s\n" % str(datetime.datetime.now()))
 		self.fd.write("\n")

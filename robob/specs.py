@@ -18,7 +18,7 @@ def deepupdate(original, update):
 	Recursively update a dict.
 	Subdict's won't be overwritten but also updated.
 	"""
-	for key, value in original.iteritems(): 
+	for key, value in original.items(): 
 		if key not in update:
 			update[key] = value
 		elif isinstance(value, dict):
@@ -57,7 +57,7 @@ class Specs(object):
 		"""
 
 		# Return keys of test-cases
-		return self.specs['test-cases'].keys()
+		return list(self.specs['test-cases'].keys())
 
 	def getMetricTitles(self):
 		"""
@@ -80,7 +80,7 @@ class Specs(object):
 		# Prepare product components
 		values = []
 		keys = []
-		for k,v in self.specs['test-cases'].iteritems():
+		for k,v in self.specs['test-cases'].items():
 			keys.append(k)
 			values.append(v)
 
@@ -92,7 +92,7 @@ class Specs(object):
 			ctx = self.context.fork()
 
 			# Update and collect
-			test_keys = dict(zip( keys, v))
+			test_keys = dict(list(zip( keys, v)))
 			ctx.update( test_keys ) # Insert in global scope
 			ctx.set( "curr", test_keys ) # And in curr scope
 			contexts.append( ctx )
@@ -163,7 +163,7 @@ class Specs(object):
 			if 'load' in specs:
 
 				# Make sure it's list
-				if type(specs['load']) in [str, unicode]:
+				if type(specs['load']) in [str, str]:
 					specs['load'] = [ specs['load'] ]
 
 				# Iterate over specs
@@ -195,7 +195,7 @@ class Specs(object):
 
 		# Import environments
 		if 'environments' in self.specs:
-			for k,v in self.specs['environments'].iteritems():
+			for k,v in self.specs['environments'].items():
 				self.context.set("env", self.specs['environments'])
 
 		# Import metrics

@@ -26,7 +26,7 @@ class Parser(ParserBase):
 		# Extract what information to track
 		self.updateMetrics = {}
 		if 'match' in config:
-			for k,v in config['match'].iteritems():
+			for k,v in config['match'].items():
 
 				# Update metrics
 				parts = v.split(".")
@@ -63,7 +63,7 @@ class Parser(ParserBase):
 				values = [ float(x) for x in parts[3:-1] ]
 
 				# Update CPU details on this matrix
-				self.matrix[cpu] = dict(zip( self.metrics, values ))
+				self.matrix[cpu] = dict(list(zip( self.metrics, values )))
 
 			else:
 				self.core_parsing = False
@@ -81,7 +81,7 @@ class Parser(ParserBase):
 		Update metrics according to details
 		"""
 
-		for metric, (cpu, track) in self.updateMetrics.iteritems():
+		for metric, (cpu, track) in self.updateMetrics.items():
 			value = None
 
 			# Get this value
