@@ -1,4 +1,5 @@
 
+import logging
 import re
 import copy
 
@@ -6,6 +7,9 @@ from collections import OrderedDict
 
 #: Macro regex
 RE_MACRO = re.compile(r'\$\{(.+?)\}')
+
+#: Context logger
+logger = logging.getLogger('context')
 
 class Context(OrderedDict):
 	"""
@@ -90,6 +94,7 @@ class Context(OrderedDict):
 		Replace all macros in this context and return a
 		dictionary with all values
 		"""
+		self._unreplaced = set()
 		dictionary = copy.deepcopy(self)
 		replaced = True
 
@@ -97,6 +102,10 @@ class Context(OrderedDict):
 		while replaced:
 			# Replace and check if this was indeed replaced
 			(dictionary, replaced) = self.replaceMacros( dictionary )
+
+		# Log unreplaced items
+		for m in self._unreplaced:
+			logger.warn("Unknown macro '${%s}' encountered in specifications!" % m)
 
 		# Return a new context with the new dictionary
 		return Context( dictionary )
@@ -117,9 +126,13 @@ class Context(OrderedDict):
 			if key in self:
 				# Return replaced & mark action
 				self._did_replace = True
+				# Remove from unreplaced
+				if key in self._unreplaced:
+					self._unreplaced.remove(key)
 				return str(self[key])
 			else:
 				# Return un-replaced
+				self._unreplaced.add(key)
 				return m.group(0)
 
 		# Replace all macros in dict
