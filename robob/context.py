@@ -97,9 +97,14 @@ class Context(OrderedDict):
 		Replace all macros in this context and return a
 		dictionary with all values
 		"""
+
+		# Prepare properties
 		self._unreplaced = set()
-		dictionary = copy.deepcopy(self)
+		self._definitions = set()
 		replaced = True
+
+		# Deep-copy dictionary
+		dictionary = copy.deepcopy(self)
 
 		# Keep replacing until there are no other macros to replace
 		while replaced:
@@ -108,7 +113,8 @@ class Context(OrderedDict):
 
 		# Log unreplaced items
 		for m in self._unreplaced:
-			logger.warn("Unknown macro '${%s}' encountered in specifications!" % m)
+			if not m in self._definitions:
+				logger.warn("Unknown macro '${%s}' encountered in specifications!" % m)
 
 		# Return a new context with the new dictionary
 		return Context( dictionary )
@@ -127,7 +133,7 @@ class Context(OrderedDict):
 			(expr, defaultValue) = expr.split("|", 1)
 
 		# Check if this is an expression
-		if ('*' in expr) or ('+' in expr) or ('/' in expr) or \
+		if ('*' in expr) or ('+' in expr) or ('/' in expr) or ('%' in expr) or \
 			('-' in expr) or ('^' in expr) or ('(' in expr) or (')' in expr):
 
 			# Replace helper
@@ -135,7 +141,7 @@ class Context(OrderedDict):
 				key = m.group(0)
 
 				# Ignore some functions
-				if key in ['str', 'int', 'float']:
+				if key in [ 'str', 'int', 'float', 'pow', 'round' ]:
 					return m.group(0)
 
 				# Replace values
@@ -173,7 +179,7 @@ class Context(OrderedDict):
 			else:
 				return defaultValue
 
-	def replaceMacros(self, where, _firstCall=True):
+	def replaceMacros(self, where, _firstCall=True, _isDefine=False):
 		"""
 		Replace all macros in context to the given string
 		"""
@@ -204,7 +210,13 @@ class Context(OrderedDict):
 		if isinstance(where, dict):
 			ans = {}
 			for k,v in where.items():
-				(ans[k], unused) = self.replaceMacros(v, False)
+				(ans[k], unused) = self.replaceMacros(v, False, (k == "define") )
+
+				# Keep track of 'define' sections in order
+				# to identify unused macros.
+				if _isDefine:
+					self._definitions.add(k)
+
 			return (ans, self._did_replace)
 
 		# Replace all macros in list

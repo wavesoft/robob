@@ -18,7 +18,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='robob',
-    version='0.1.0b1',
+    version='0.2.0',
 
     description='A python tool for simplifying collection of measurements over repetitive tasks',
     long_description=long_description,

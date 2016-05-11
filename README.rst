@@ -67,12 +67,12 @@ The following specification file from the Simple Example (https://github.com/wav
     apps:
       - name: iperf_server
         binary: /usr/bin/iperf
-        args: [ "-y", "C", "-s", "-w", "${window-size}" ]
+        args: [ "-y", "C", "-s", "-w", "${window_size}" ]
         parser: iperf_parser
 
       - name: iperf_client
         binary: /usr/bin/iperf
-        args: [ "-y", "C", "-c", "${remote}", "-w", "${window-size}" ]
+        args: [ "-y", "C", "-c", "${remote}", "-w", "${window_size}" ]
         parser: iperf_parser
 
     # How to parse their output

@@ -309,22 +309,27 @@ class TestStreamThread(Thread):
 					return
 
 				# Read data
-				buf = os.read( proc.fd, 4096)
-				if buf:
+				try:
+					buf = os.read( proc.fd, 4096)
+					if buf:
 
-					# Stack buffers
-					data += buf
+						# Stack buffers
+						data += buf
 
-					# Replace windows newlines & process lines
-					data = data.replace("\r\n", "\n")
-					while "\n" in data:
-						(line, data) = data.split("\n",1)
-						handle_line(line)
+						# Replace windows newlines & process lines
+						data = data.replace("\r\n", "\n")
+						while "\n" in data:
+							(line, data) = data.split("\n",1)
+							handle_line(line)
 
-					# Note when we received the data
-					# in order to forward them as-is as
-					# incomplete line data after a timeout
-					data_flush_t = ts + 0.1
+						# Note when we received the data
+						# in order to forward them as-is as
+						# incomplete line data after a timeout
+						data_flush_t = ts + 0.1
+
+				except (OSError, IOError) as e:
+					self.interrupt("Communication Interrupted (%s: %s)" % (e.__class__.__name__, str(e)))
+					break
 
 			# Check for process exit
 			if proc.poll() != None:
