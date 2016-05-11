@@ -1,9 +1,6 @@
 roBOB (robot-benchmark)
 =======================
 
-.. image:: https://img.shields.io/pypi/v/robob.svg
-  :target: https://pypi.python.org/pypi/robob
-
 .. image:: https://raw.githubusercontent.com/wavesoft/robob/master/doc/robob.png
   :target: https://github.com/wavesoft/robob
   :align: left
