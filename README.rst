@@ -97,5 +97,5 @@ The following specification file from the Simple Example (https://github.com/wav
         # We also need to define the '${remote}' macro
         # to point on the IP address of the server
         define:
-          remote: "${node1.host}"
+          remote: "${node.node1.host}"
 

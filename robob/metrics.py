@@ -5,8 +5,6 @@ import time
 from collections import OrderedDict
 from robob.factories import aggregateFactory
 
-logger = logging.getLogger("metrics")
-
 #: SI prefix metric (ex. 10^3->k, 10^6->M)
 METRIC_SI = 1
 
@@ -362,6 +360,7 @@ class Metrics(object):
 		"""
 		Update the specified value to a metric
 		"""
+		logger = logging.getLogger("metrics")
 
 		# Update the specified metric
 		if name in self.metrics:

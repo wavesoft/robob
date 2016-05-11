@@ -11,9 +11,6 @@ RE_MACRO = re.compile(r'\$\{(.+?)\}')
 #: Macro variable regex
 RE_MACRO_VAR = re.compile(r'[a-z][a-z0-9\._]*', flags=re.IGNORECASE)
 
-#: Context logger
-logger = logging.getLogger('context')
-
 class Context(OrderedDict):
 	"""
 	An environment variable and context
@@ -131,6 +128,7 @@ class Context(OrderedDict):
 		Replace all macros in this context and return a
 		dictionary with all values
 		"""
+		logger = logging.getLogger('context')
 
 		# Prepare properties
 		self._unreplaced = set()
@@ -156,6 +154,7 @@ class Context(OrderedDict):
 		"""
 		Evaluate a macro expression
 		"""
+		logger = logging.getLogger('context')
 
 		# Reset properties
 		self._evalMissing = False
