@@ -1,6 +1,9 @@
 roBOB (robot-benchmark)
 =======================
 
+.. image:: https://img.shields.io/pypi/v/robob.svg
+  :target: https://pypi.python.org/pypi/robob
+
 .. image:: https://raw.githubusercontent.com/wavesoft/robob/master/doc/robob.png
   :target: https://github.com/wavesoft/robob
   :align: left
@@ -11,7 +14,7 @@ Do you have to run some benchmarks? Do you need to run some tasks over night and
 
 It uses a powerful, extensible, human-readable YAML ruleset for defining your specifications.
 
-You can learn more on the Wiki Page: https://github.com/wavesoft/robob/wiki !
+You can learn more on the Wiki Page: https://github.com/wavesoft/robob/wiki
 
 Installing
 ----------
@@ -30,6 +33,8 @@ To launch a benchmark you only need to specify the path to the specifications fi
 .. code-block::
 
     robob benchmarks/mybenchmark.yaml
+
+Robob will collect the results in a CSV file. If robob finds a folder called `results` in the working directory, it will put the results there. Otherwise it will write them in the current directory.
 
 Example
 ^^^^^^^

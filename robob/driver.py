@@ -202,6 +202,9 @@ class TestStreamThread(Thread):
 					self.logger.warn("Interrupted while in delay")
 					return
 
+		# Log start of stream
+		self.logger.info("Starting stream")
+
 		# Prepare expiration time
 		t_expire = None
 		if self.stream.timeout:
