@@ -31,7 +31,7 @@ To launch a benchmark you only need to specify the path to the specifications fi
 
     robob benchmarks/mybenchmark.yaml
 
-Robob will collect the results in a CSV file. If robob finds a folder called `results` in the working directory, it will put the results there. Otherwise it will write them in the current directory.
+Robob will collect the results in a CSV file. If robob finds a folder called ``results`` in the working directory, it will put the results there. Otherwise it will write them in the current directory.
 
 Example
 ^^^^^^^
