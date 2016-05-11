@@ -1,4 +1,5 @@
 
+import logging
 import re
 from robob.component import ComponentBase
 
@@ -30,7 +31,7 @@ class PipeExpect(object):
 	A pipe expect entry
 	"""
 
-	def __init__(self, match, callback=None, send=None):
+	def __init__(self, match, callback=None, call_always=False, send=None, repeat=False):
 		"""
 		Initialize a pipe expect entry
 		"""
@@ -40,35 +41,51 @@ class PipeExpect(object):
 		self.match = re.compile(match)
 		self.callback = callback
 		self.send = send
+		self.repeat = repeat
+		self.sent = False
+		self.call_always = call_always
 
-		# Match function result
-		self.found = None
+		# Get a logger
+		self.logger = logging.getLogger("pipe.expect")
 
-	def matches(self, line):
+		# Flags for driver
+		self.do_reply = None
+		self.do_remove = False
+
+	def apply(self, line):
 		"""
-		Test if the pipe expects
+		Apply expect rule on the specified line and update
+		the do_reply and do_remove flags accordingly
 		"""
 
-		# Return the match if found, None otherwise
-		self.found = self.match.search( line )
-		return self.found
+		# Reset flags
+		self.do_reply = None
+		self.do_remove = False
 
-	def render(self):
-		"""
-		Render the result to send after expect
-		"""
+		# Pass through if not found
+		found = self.match.search( line )
+		if not found:
 
-		# Return data if only data specified
+			# If we must always call the callback, call it now
+			if self.call_always:
+				self.callback( self, None, line )
+
+			# Don't continue
+			return
+
+		# If we have a string reply right away
 		if self.send:
-			return self.send
+			self.do_reply = self.send
+			self.do_remove = not self.repeat
 
-		# Otherwise use callback
+		# Otherwise pass request to callback
 		elif self.callback:
-			return self.callback( self.found )
+			self.callback( self, found, line )
 
-		# Nothing found? Return None
+		# Error
 		else:
-			return ""
+			self.logger.warn("Empty expect object encountered!")
+			self.do_remove = True
 
 	def __str__(self):
 		return self.repr

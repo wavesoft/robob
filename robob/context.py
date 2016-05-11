@@ -19,11 +19,45 @@ class Context(OrderedDict):
 	An environment variable and context
 	"""
 
+	@staticmethod
+	def definitions_in( specs_dict ):
+		"""
+		Traverse specifications dict and detect definitions
+		"""
+
+		# Prepare properties
+		defs = set()
+		stack = [ specs_dict ]
+
+		# Traverse stack
+		while stack:
+			top = stack.pop(0)
+			for k,v in top.items():
+				if isinstance(v, dict):
+					if k == "define":
+						defs.update( v.keys() )
+					else:
+						stack.append(v)
+				elif isinstance(v, list):
+					for d in v:
+						if isinstance(d, dict):
+							stack.append(d)
+
+		# Return definitions
+		return defs
+
+	def __init__(self, contents={}, definitions=set()):
+		"""
+		Initialize parent dictionary
+		"""
+		OrderedDict.__init__(self, contents)
+		self._definitions = definitions
+
 	def fork(self):
 		"""
 		Deep copy current context into another context
 		"""
-		return Context( copy.deepcopy(self) )
+		return Context( copy.deepcopy(self), self._definitions )
 
 	def set(self, name, value, include_flag=True):
 		"""
@@ -100,7 +134,6 @@ class Context(OrderedDict):
 
 		# Prepare properties
 		self._unreplaced = set()
-		self._definitions = set()
 		replaced = True
 
 		# Deep-copy dictionary
@@ -179,7 +212,7 @@ class Context(OrderedDict):
 			else:
 				return defaultValue
 
-	def replaceMacros(self, where, _firstCall=True, _isDefine=False):
+	def replaceMacros(self, where, _firstCall=True):
 		"""
 		Replace all macros in context to the given string
 		"""
@@ -210,12 +243,7 @@ class Context(OrderedDict):
 		if isinstance(where, dict):
 			ans = {}
 			for k,v in where.items():
-				(ans[k], unused) = self.replaceMacros(v, False, (k == "define") )
-
-				# Keep track of 'define' sections in order
-				# to identify unused macros.
-				if _isDefine:
-					self._definitions.add(k)
+				(ans[k], unused) = self.replaceMacros(v, False)
 
 			return (ans, self._did_replace)
 

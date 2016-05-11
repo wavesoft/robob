@@ -62,22 +62,29 @@ class ColoredFormatter(logging.Formatter):
 
 		return logging.Formatter.format(self, record)
 
-# Custom logger class with multiple destinations
-class RobobLogger(logging.Logger):
 
-	FORMAT = "[$BOLD%(levelname)s$RESET][%(name)s] %(message)s"
-	COLOR_FORMAT = formatter_message(FORMAT, True)
+def init(logLevel=logging.INFO):
+	"""
+	Call this function to initialize global logger
+	"""
 
-	def __init__(self, name):
-		logging.Logger.__init__(self, name, logging.INFO)                
+	# Custom logger class with multiple destinations
+	class RobobLogger(logging.Logger):
 
-		# Use colored formatter
-		color_formatter = ColoredFormatter(self.COLOR_FORMAT)
+		FORMAT = "[$BOLD%(levelname)s$RESET][%(name)s] %(message)s"
+		COLOR_FORMAT = formatter_message(FORMAT, True)
 
-		# Add console target
-		console = logging.StreamHandler()
-		console.setFormatter(color_formatter)
-		self.addHandler(console)
+		def __init__(self, name):
+			logging.Logger.__init__(self, name, logLevel)                
 
-# Set robob logger
-logging.setLoggerClass(RobobLogger)
+			# Use colored formatter
+			color_formatter = ColoredFormatter(self.COLOR_FORMAT)
+
+			# Add console target
+			console = logging.StreamHandler()
+			console.setFormatter(color_formatter)
+			self.addHandler(console)
+
+	# Set robob logger
+	logging.setLoggerClass(RobobLogger)
+

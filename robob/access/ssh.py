@@ -7,6 +7,13 @@ class Pipe(PipeBase):
 	SSH Tunelling pipe
 	"""
 
+	def __init__(self, *args):
+		"""
+		Initialize ssh pipe
+		"""
+		PipeBase.__init__(self, *args)
+		self.logger = logging.getLogger("access.ssh")
+
 	def configure(self, config):
 		"""
 		Configure access object
@@ -17,6 +24,8 @@ class Pipe(PipeBase):
 		self.args = []
 		self.password = None
 		self.host = None
+
+		self.sent_line = ""
 
 		# Prepare private key or password
 		if 'key' in config:
@@ -52,6 +61,39 @@ class Pipe(PipeBase):
 		# Return new arguments
 		return args
 
+	def expect_password(self, expect, match, line):
+		"""
+		Callback when a password prompt is encountered
+		"""
+
+		# If we don't have a match, and we have sent a password
+		# the password was correct
+		if not match:
+			if self.sent_line:
+				self.logger.info("Connected to %s" % self.host)
+				expect.do_remove = True
+
+		# Otherwise check for password
+		else:
+
+			# If the matched line is the same like the line
+			# we went a password to, it means that the password
+			# was invalid
+			if self.sent_line == line:
+				raise IOError("Invalid password for %s" % self.host)
+
+			# If we have already sent a line, and the received line
+			# does not match, that's OK, we have a chained SSH call
+			elif self.sent_line:
+				self.logger.info("Connected to %s" % self.host)
+				expect.do_remove = True
+
+			# Send authentication information
+			else:
+				self.sent_line = line
+				self.logger.info("Authenticating to %s" % self.host)
+				expect.do_reply = self.password + "\r\n\r\n"
+
 	def pipe_expect_stdout(self):
 		"""
 		Add an expect entry to send password when requested
@@ -60,7 +102,7 @@ class Pipe(PipeBase):
 		# Prepare expect
 		expect = []
 		if self.password:
-			expect.append( PipeExpect( r"[Pp]assword:", send=self.password+"\r" ) )
+			expect.append( PipeExpect( r"[Pp]assword:", callback=self.expect_password, call_always=True ) )
 
 		# Forward
 		return expect + PipeBase.pipe_expect_stdout(self)

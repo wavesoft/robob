@@ -44,7 +44,7 @@ The following specification file from the Simple Example (https://github.com/wav
         units: "B/s"
 
     # Which test cases are we going to run
-    test-case:
+    test-cases:
       window_size: [ 64, 128, 256, 512, 1024, 2048 ]
 
     # Which nodes are involved on this test

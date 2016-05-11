@@ -152,7 +152,7 @@ class TestStreamThread(Thread):
 			return
 
 		# Mark as interrupted
-		self.logger.critical("Interrupting stream")
+		self.logger.debug("Interrupting stream")
 		self.interrupted = True
 		self.interruptReason = reason
 
@@ -168,7 +168,7 @@ class TestStreamThread(Thread):
 
 				# Check if this was enough
 				if self.proc.poll() != None:
-					self.logger.warn("Stream interrupted")
+					self.logger.warn("Stream interrupted (%s)" % reason)
 					break
 
 				# Check for timeouts
@@ -176,7 +176,7 @@ class TestStreamThread(Thread):
 
 					# Terminate
 					self.proc.terminate()
-					self.logger.warn("Stream terminated")
+					self.logger.warn("Stream terminated (%s)" % reason)
 					break
 
 			# Reap process
@@ -230,12 +230,10 @@ class TestStreamThread(Thread):
 
 		# Flag that keeps line polling activ
 		active = True
+		out_inactive = False
 
 		# Helper function to handle lines
 		def handle_line(read):
-
-			# Consider this an "activity" action
-			self.lastactivity = time.time()
 
 			# Skip empty lines
 			if not read.strip():
@@ -248,24 +246,39 @@ class TestStreamThread(Thread):
 			self.logger.debug("STDIN: %s" % read)
 			try:
 
-				# First apply over expect
+				# First apply expect rules in the received line
 				handled = False
-				for i in range(0, len(expect_out)):
-					if expect_out[i].matches( read ):
-						self.logger.debug("Expect matched as /%s/ on stdin" % str(expect_out[i]))
-						os.write( proc.fd, expect_out[i].render() )
-						del expect_out[i]
+				i = 0
+				while i < len(expect_out):
+
+					# Apply expect on the given input
+					expect = expect_out[i]
+					expect.apply( read )
+
+					# Check if we should send a reply
+					if expect.do_reply:
+						self.logger.debug("Expect matched '%s' on stdin" % str(expect_out[i]))
+						os.write( proc.fd, expect.do_reply )
 						handled = True
+
+					# If apply returned None, remove it
+					if expect.do_remove:
+						self.logger.debug("Expect requested removal")
+						del expect_out[i]
+						i -= 1
+
+					# If we replied, also break
+					if expect.do_reply:
 						break
+
+					# Handle next item
+					i += 1
 
 				# If not handled, pass to pipe
 				if not handled:
 					pipe.pipe_stdout( read )
 
 			except Exception as e:
-
-				import traceback
-				traceback.print_exc()
 
 				# In case something went wrong while processing the streams,
 				# kill the process
@@ -277,7 +290,7 @@ class TestStreamThread(Thread):
 				return
 
 			# If we have processed all expect entries, send STDIN
-			if self.has_expect and (len(expect_out) == 0) and (len(expect_err) == 0):
+			if self.has_expect and (handled and (len(expect_out) <= 1)):
 				self.logger.debug("No more expects left, sending STDIN payload")
 				os.write( proc.fd, pipe.pipe_stdin() )
 				os.write( proc.fd, "\x04") # End-of-transmission
@@ -300,6 +313,11 @@ class TestStreamThread(Thread):
 				handle_line(data)
 				data = ""
 
+			# Test cases were an error has closed the fd
+			if not proc.fd:
+				pipe.pipe_close()
+				return
+
 			# Wait for data within 100ms
 			if proc.fd in select.select([proc.fd], [], [], 0.1)[0]:
 
@@ -312,6 +330,10 @@ class TestStreamThread(Thread):
 				try:
 					buf = os.read( proc.fd, 4096)
 					if buf:
+
+						# Update activity
+						self.lastactivity = time.time()
+						out_inactive = False
 
 						# Stack buffers
 						data += buf
@@ -342,6 +364,12 @@ class TestStreamThread(Thread):
 				self.interrupt("Timeout after %s sec" % self.stream.timeout)
 				pipe.pipe_close()
 				return
+
+			# Warn after 10 seconds of inactivity
+			if ts > (self.lastactivity + 30):
+				if not out_inactive:
+					out_inactive = True
+					self.logger.warn("No tty activity after 30 seconds")
 
 			# Check if idle timeout expired
 			if self.stream.idletimeout and (ts > (self.lastactivity + self.stream.idletimeout)):
@@ -412,39 +440,49 @@ class TestDriver:
 			# Create a test stream thread
 			t = TestStreamThread( s )
 
-			# Start and keep
-			t.start()
+			# Collect threads
 			self.threads.append(t)
+
+		# Start all of them
+		for t in self.threads:
+			t.start()
 
 		# Wait for all threads to complete
 		self.logger.debug("Waiting for stream threads to exit")
-		hasAlive = True
+		allAlive = True
 		hasInterrupt = False
-		while hasAlive:
+		while allAlive:
 
 			# Check status of all items
-			hasAlive = False
+			allAlive = True
 			for t in self.threads:
 				if t.interrupted:
 					hasInterrupt = True
 					break
-				if t.is_alive():
-					hasAlive = True
+				if not t.is_alive():
+					self.logger.debug("Thread '%s' exited" % t.stream.name)
+					allAlive = False
 					break
 
 			# If something interrupted, interrupt everything
 			if hasInterrupt:
-				self.logger.warn("Thread '%s' interrupted, so collapsing this test-case" % t.stream.name)
+				self.logger.debug("Thread '%s' interrupted, so collapsing this test-case" % t.stream.name)
 				self.interrupt(t.interruptReason)
 				break
 
 			# Otherwise wait for a sec before retry
-			if hasAlive:
+			if allAlive:
 				time.sleep(0.1)
 
-		# Update exit code status
+		# Kill all threads if not all stopped & update status
 		for t in self.threads:
-			if t.returncode != 0:
+			if t.is_alive():
+				if self.lastComment:
+					self.lastComment += "; "
+				self.lastComment += "%s forced to exit" % (t.stream.name,)
+				t.interrupt("Another stream exited first")
+
+			elif t.returncode != 0:
 				if self.lastComment:
 					self.lastComment += "; "
 				self.lastComment += "%s returned=%i" % (t.stream.name, t.returncode)
@@ -484,9 +522,12 @@ class TestDriver:
 		self.lastResults = self.metrics.results()
 		self.results.append( self.lastResults )
 
-		# Interrupt and join all threads
+		# Interrupt all threads
 		for t in self.threads:
 			self.logger.debug("Interrupting stream thread %s" % t.stream.name)
 			t.interrupt()
+
+		# Join all threads
+		for t in self.threads:
 			self.logger.debug("Joining stream thread %s" % t.stream.name)
 			t.join()

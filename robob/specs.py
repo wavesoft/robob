@@ -185,7 +185,7 @@ class Specs(object):
 			self.specs = deepupdate( self.specs, specs )
 
 		# Open a global context & import global variables
-		self.context = Context()
+		self.context = Context( definitions=Context.definitions_in(self.specs) )
 		if 'globals' in self.specs:
 			self.context.update( self.specs['globals'] )
 
