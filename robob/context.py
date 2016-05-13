@@ -254,7 +254,7 @@ class Context(OrderedDict):
 			return (ans, self._did_replace)
 
 		# Replace all macros in string
-		elif type(where) in [str, str]:
+		elif isinstance(where, str):
 			return (RE_MACRO.sub( replace, where ), self._did_replace)
 
 		# Pass through everything else

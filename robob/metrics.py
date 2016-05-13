@@ -122,7 +122,7 @@ class MetricValue(object):
 		Return value as number
 		"""
 		try:
-			if type(self.v) in [str, str]:
+			if isinstance(self.v, str):
 				if '.' in self.v:
 					return float(self.v)
 				else:
@@ -178,12 +178,12 @@ class Metric(object):
 			self.decimals = int(config['dec'])
 		if 'aggregate' in config:
 			aggregate = config['aggregate']
-			if type(aggregate) in [str, str]:
+			if isinstance(aggregate, str):
 				aggregate = [ {"class": aggregate} ]
 			if type(aggregate) is dict:
 				aggregate = [ aggregate ]
 			for a in aggregate:
-				if type(a) in [str, str]:
+				if isinstance(a, str):
 					a = {"class": a}
 				self.aggregators.append( aggregateFactory(a, self) )
 

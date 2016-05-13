@@ -134,3 +134,6 @@ def main():
 		logger.error("Missing expected key %s in the specs file!" % str(e))
 		return 1
 
+	except Exception as e:
+		logger.error("%s: %s" % ( e.__class__.__name__, str(e)))
+		return 2

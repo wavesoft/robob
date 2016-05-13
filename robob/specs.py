@@ -1,4 +1,5 @@
 
+import re
 import os
 import yaml
 import itertools
@@ -12,6 +13,9 @@ from robob.reporter import Reporter
 from robob.metrics import Metrics
 from robob.context import Context
 from robob.stream import Stream, streamContext
+
+#: Macro regex
+RE_MACRO = re.compile(r'\$\{(.+?)\}')
 
 def deepupdate(original, update):
 	"""
@@ -37,6 +41,23 @@ def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 		yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
 		construct_mapping)
 	return yaml.load(stream, OrderedLoader)
+
+def replace_robob_macros(m):
+	"""
+	Replace robob. macros
+	"""
+	key = m.group(1)
+	if key[0:6] != "robob.":
+		raise AssertionError("Unknown macro '${%s}' encountered in 'load' field. You can only use 'robob.*' macros here!" % key)
+	
+	# Get full path to data directory
+	dataDir = os.path.join( os.path.dirname( os.path.realpath(__file__) ), "data" )
+
+	# Replace macros
+	if key == "robob.streamlets":
+		return os.path.join( dataDir, "streamlets" )
+	else:
+		raise AssertionError("Unknown robob macro '${%s}'" % key)
 
 class Specs(object):
 	"""
@@ -163,11 +184,16 @@ class Specs(object):
 			if 'load' in specs:
 
 				# Make sure it's list
-				if type(specs['load']) in [str, str]:
+				if isinstance(specs['load'], str):
 					specs['load'] = [ specs['load'] ]
 
 				# Iterate over specs
 				for f in specs['load']:
+
+					# Replace robob macros
+					f = RE_MACRO.sub( replace_robob_macros, f )
+
+					# Process
 					if f[0] == "/":
 						filestack.append(f)
 					else:

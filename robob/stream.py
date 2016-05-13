@@ -191,7 +191,7 @@ class Stream(object):
 		# Check if stream is active
 		if 'stream.active' in self.context:
 			self.active = self.context['stream.active']
-			if type(self.active) in [str, str]:
+			if isinstance(self.active, str):
 				self.active = self.active.lower() in [ "1", "yes", "true", "on" ]
 
 		# If not active exit
@@ -278,18 +278,18 @@ class Stream(object):
 			for slt in specs['streamlets']:
 
 				# Expand string shorthand
-				if type(slt) in [str, str]:
-					slt = { "streamlet": slt }
+				if isinstance(slt, str):
+					slt = { "name": slt }
 
 				# Get name
-				if not 'streamlet' in slt:
-					raise AssertionError("Missing 'streamlet' keyword in specs of stream '%s'" % self.name)
-				n = slt['streamlet']
+				if not 'name' in slt:
+					raise AssertionError("Missing 'name' keyword in specs of stream '%s'" % self.name)
+				n = slt['name']
 
 				# Get streamlet
-				if not "streamlet.%s" % n in self.context:
+				if not "streamlets.%s" % n in self.context:
 					raise AssertionError("Streamlet '%s' was not defined in specs" % n)
-				streamlet = self.context["streamlet.%s" % n]
+				streamlet = self.context["streamlets.%s" % n]
 
 				# Create a streamlet context & merge definitions
 				streamlet_context = self.context.fork()

@@ -19,7 +19,7 @@ class Pipe(PipeBase):
 
 		# Parse arguments
 		if 'args' in config:
-			if type(config['args']) in [str, str]:
+			if isinstance(config['args'], str):
 				self.args = shlex.split(config['args'])
 			elif isinstance(config['args'], list):
 				self.args = config['args']

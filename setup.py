@@ -18,7 +18,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='robob',
-    version='0.2.1',
+    version='0.2.2',
 
     description='A python tool for simplifying collection of measurements over repetitive tasks',
     long_description=long_description,
@@ -37,7 +37,7 @@ setup(
     classifiers=[
 
         # Project maturity
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
@@ -69,6 +69,9 @@ setup(
 
     # Project dependencies
     install_requires=['PyYAML'],
+
+    # Keep pre-installed data
+    package_data={'robob': ['data/*.dat']},
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow

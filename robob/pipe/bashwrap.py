@@ -179,6 +179,10 @@ class Pipe(PipeBase):
 			# Define run script
 			s_run += "run_%i&\nFRAG_PID_%i=$!\n" % (i,i)
 
+			# Expose application PID
+			if i == 0:
+				s_run += "APP_PID=$(pgrep -P $(pgrep -P $(pgrep -P $FRAG_PID_0 2>/dev/null | head -n1) 2>/dev/null | head -n1) 2>/dev/null | head -n1)"
+
 			# Define killer trap
 			s_killtrap += "kill -@@ $FRAG_PID_%i 2>/dev/null\n" % (i,)
 
